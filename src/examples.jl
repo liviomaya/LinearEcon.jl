@@ -199,7 +199,7 @@ function frictionless_mon_dominance()
     labels = ["Real Interest", "Inflation", "Nominal Interest"]
 
     irf(m, sol, varIndex=varIndex, labels=labels)
-    #path(m, sol, varIndex=varIndex, labels=labels, title="Simulation", devSS = false)
+    path(m, sol, varIndex=varIndex, labels=labels, title="Simulation", devSS = false)
     nothing
 end
 frictionless_mon_dominance()

@@ -1,4 +1,4 @@
-include("src\\RESOLVER.jl");
+#include("src\\RESOLVER.jl");
 
 # comments
 function price_stock()
