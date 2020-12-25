@@ -1,5 +1,3 @@
-include("src\\RESOLVER.jl");
-
 function price_stock()
 
     #=  PRICE OF A STOCK
