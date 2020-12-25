@@ -1,5 +1,14 @@
 module LinearEcon
 
-greet() = print("Hello World!")
+export model, solution, ss, covariance, path, irf
 
-end # module
+using LinearAlgebra
+using Plots
+pyplot()
+include("structures.jl")
+include("auxiliary.jl")
+include("treat.jl")
+include("main.jl")
+include("studies.jl")
+
+end 
