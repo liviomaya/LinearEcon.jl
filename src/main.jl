@@ -93,6 +93,7 @@ function solvemodel(m0::model)
         Lt2 = checkreal(Lt2)
         Mz0 = checkreal(Mz0)
         αz = checkreal(αz)
+        αy = checkreal(αy)
         dp = dpsolution(Λ2,Lt2,Mx0,My0,Mz0,αx,αy,αz)
         sol = solution(c,P,Q,dp)
         return sol
