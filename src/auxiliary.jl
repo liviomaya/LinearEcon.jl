@@ -1,8 +1,9 @@
-function checkreal(x)
-    (sum(abs.(imag.(x)) .> 1e-5) > 0) && println("Imaginary component found in the solution.")
-    xt = real.(x)
-    return xt
+function convert_real(x, flag)
+    flag = flag || maximum(abs.(imag.(x))) .> 1e-5
+    x = real.(x)
+    return x, flag
 end
+convert_real(x) = convert_real(x, true)[1]
 
 function standardinitialx0(m,sol)
     if m.n == 0

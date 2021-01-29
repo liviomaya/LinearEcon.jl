@@ -17,51 +17,59 @@ function dynsolution(H::Array{Float64,2},
         V = inv(Vi)
         Λ = diagm(0 => Λ_vec)
 
-        n̄ = sum(abs.(Λ_vec).<=1)
-        m̄ = sum(abs.(Λ_vec).>1)
-        V11 = V[1:n̄,1:n]
-        V12 = V[1:n̄,n+1:n+m]
-        V21 = V[n̄+1:n̄+m̄,1:n]
-        V22 = V[n̄+1:n̄+m̄,n+1:n+m]
-        R11 = Vi[1:n,1:n̄]
-        R12 = Vi[1:n,n̄+1:n̄+m̄]
-        R21 = Vi[n+1:n+m,1:n̄]
-        R22 = Vi[n+1:n+m,n̄+1:n̄+m̄]
-        Λ1 = Λ[1:n̄,1:n̄]
-        Λ2 = Λ[n̄+1:n̄+m̄,n̄+1:n̄+m̄]
-        Ht1 = V11 * H1 + V12 * H2
-        Ht2 = V21 * H1 + V22 * H2
-        Kt1 = V11 * K1 + V12 * K2
-        Kt2 = V21 * K1 + V22 * K2
-        Lt1 = V11 * L1 + V12 * L2
-        Lt2 = V21 * L1 + V22 * L2
+        #ttt = Vi
+        #display(det(Vi))
+        #display(Vi \ Vi)
+        #@show maximum(abs.(imag.(Vi \ Vi)))
+        #@show maximum(abs.( (Vi \ Vi) .- I(17) ) )
 
-        # Check rank conditions
-        println("$m̄ unstable equations to $m forward looking variables.")
-        if m̄ < m
-                error("More forward looking variables than
-                    unstable eigenvalues: infinite solutions.")
-        elseif m̄ > m
-                error("More unstable eigenvalues than
-                    forward looking variables: no solution.")
-        end
-        if det(V22) == 0
-                error("Rank condition not verified. V₂₂ not invertible.")
-        end
-        println("Rank condition verified.")
+        if true
+                n̄ = sum(abs.(Λ_vec).<=1)
+                m̄ = sum(abs.(Λ_vec).>1)
+                V11 = V[1:n̄,1:n]
+                V12 = V[1:n̄,n+1:n+m]
+                V21 = V[n̄+1:n̄+m̄,1:n]
+                V22 = V[n̄+1:n̄+m̄,n+1:n+m]
+                R11 = Vi[1:n,1:n̄]
+                R12 = Vi[1:n,n̄+1:n̄+m̄]
+                R21 = Vi[n+1:n+m,1:n̄]
+                R22 = Vi[n+1:n+m,n̄+1:n̄+m̄]
+                Λ1 = Λ[1:n̄,1:n̄]
+                Λ2 = Λ[n̄+1:n̄+m̄,n̄+1:n̄+m̄]
+                Ht1 = V11 * H1 + V12 * H2
+                Ht2 = V21 * H1 + V22 * H2
+                Kt1 = V11 * K1 + V12 * K2
+                Kt2 = V21 * K1 + V22 * K2
+                Lt1 = V11 * L1 + V12 * L2
+                Lt2 = V21 * L1 + V22 * L2
 
-        In = diagm(0 => ones(n))
-        Im = diagm(0 => ones(m))
-        cx = R11*Ht1 - (In - R11*Λ1*inv(R11)) * R12 * inv(Im-inv(Λ2)) * inv(Λ2) * Ht2
-        cy = - inv(V22) * inv(Im - inv(Λ2)) * inv(Λ2) * Ht2
-        Px = R11 * Λ1 * inv(R11)
-        Py = R21 * inv(R11)
-        Qx = R11*Kt1 + R11*Λ1*inv(R11)*R12*inv(Λ2)*Kt2
-        Qy = -inv(V22)*inv(Λ2)*Kt2
-        Mx0 = R11 * Lt1 + R11 * Λ1 * inv(R11) * R12 * inv(Λ2) * Lt2
-        My0 = -inv(V22)*inv(Λ2)*Lt2
-        αx = R11 * Λ1 * inv(R11) * R12 * inv(Λ2) - R12
-        αy = -inv(V22)*inv(Λ2)
+                # Check rank conditions
+                println("$m̄ unstable equations to $m forward looking variables.")
+                if m̄ < m
+                        error("More forward looking variables than
+                        unstable eigenvalues: infinite solutions.")
+                elseif m̄ > m
+                        error("More unstable eigenvalues than
+                        forward looking variables: no solution.")
+                end
+                if det(V22) == 0
+                        error("Rank condition not verified. V₂₂ not invertible.")
+                end
+                println("Rank condition verified.")
+
+                In = diagm(0 => ones(n))
+                Im = diagm(0 => ones(m))
+                cx = R11*Ht1 - (In - R11*Λ1*inv(R11)) * R12 * inv(Im-inv(Λ2)) * inv(Λ2) * Ht2
+                cy = - inv(V22) * inv(Im - inv(Λ2)) * inv(Λ2) * Ht2
+                Px = R11 * Λ1 * inv(R11)
+                Py = R21 * inv(R11)
+                Qx = R11*Kt1 + R11*Λ1*inv(R11)*R12*inv(Λ2)*Kt2
+                Qy = -inv(V22)*inv(Λ2)*Kt2
+                Mx0 = R11 * Lt1 + R11 * Λ1 * inv(R11) * R12 * inv(Λ2) * Lt2
+                My0 = -inv(V22)*inv(Λ2)*Lt2
+                αx = R11 * Λ1 * inv(R11) * R12 * inv(Λ2) - R12
+                αy = -inv(V22)*inv(Λ2)
+        end
 
         return cx,cy,Px,Py,Qx,Qy,Λ2,Lt2,Mx0,My0,αx,αy
 end
@@ -79,21 +87,30 @@ function solvemodel(m0::model)
         cz = inv(C33) * (auxA*cx + A32 * cy - B3 - C32 * cy)
         Pz = inv(C33) * (auxA*Px - C31 - C32 * Py)
         Qz = inv(C33) * (auxA*Qx - C32 * Qy - D3 * m0.Σ)
-        #My0 = - inv(Λ2) * Lt2
         Mz0 = inv(C33) * (auxA*Mx0 - C32*My0 - F3)
         αz =  inv(C33) * (auxA*αx + A32*αy*Λ2 - C32*αy)
 
-        c = checkreal([cx; cy; cz])
-        P = checkreal([Px; Py; Pz])
-        Q = checkreal([Qx; Qy; Qz])
-        Mx0 = checkreal(Mx0)
-        My0 = checkreal(My0)
-        αx = checkreal(αx)
-        Λ2 = checkreal(Λ2)
-        Lt2 = checkreal(Lt2)
-        Mz0 = checkreal(Mz0)
-        αz = checkreal(αz)
-        αy = checkreal(αy)
+        c = [cx; cy; cz]
+        P = [Px; Py; Pz]
+        Q = [Qx; Qy; Qz]
+
+        flag_complex = false
+        c, flag_complex = convert_real(c, flag_complex)
+        P, flag_complex = convert_real(P, flag_complex)
+        Q, flag_complex = convert_real(Q, flag_complex)
+        Lt2, flag_complex = convert_real(Lt2, flag_complex)
+        Mx0, flag_complex = convert_real(Mx0, flag_complex)
+        My0, flag_complex = convert_real(My0, flag_complex)
+        Mz0, flag_complex = convert_real(Mz0, flag_complex)
+
+        flag_complex && println("Imaginary component found in the solution.")
+
+        # the following lines are problematic:
+        Λ2 = convert_real(Λ2)
+        αx = convert_real(αx)
+        αy = convert_real(αy)
+        αz = convert_real(αz)
+
         dp = dpsolution(Λ2,Lt2,Mx0,My0,Mz0,αx,αy,αz)
         sol = solution(c,P,Q,dp)
         return sol
