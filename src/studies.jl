@@ -41,33 +41,31 @@ Compute the covariance and correlation matrices `V` and `R`, respectivelly, of t
 function covariance(m::model, sol::solution)
 
     if m.n == 0
-        cov = sol.Q * sol.Q'
+        P̄ = [zeros(m.m,m.m) sol.Q*m.Φ; zeros(m.p,m.m) m.Φ]
+    elseif m.m == 0
+        P̄ = [sol.P sol.Q*m.Φ; zeros(m.p,m.n) m.Φ]
     else
-        Px = sol.P[1:m.n, :]
-        Qx = sol.Q[1:m.n, :]
-        xcov = Qx * Qx'
-        itermax = 1000
-        iter = 1
-        while iter <= itermax
-            xcovUpd = Px * xcov * Px' + Qx * Qx'
-            dist = maximum(abs.(xcovUpd - xcov))
-            (log10(dist) < -7) && break
-            iter += 1
-            xcov = 0.50 * xcovUpd + 0.50 * xcov
-        end
-        if m.m + m.p > 0
-            Pnx = sol.P[m.n+1:end, :]
-            Qnx = sol.Q[m.n+1:end, :]
-            ycov = Pnx * xcov * Pnx' + Qnx * Qnx'
-            yxcov = Pnx * xcov * Px' + Qnx * Qx'
-            cov = [xcov yxcov'; yxcov ycov]
-        else
-            cov = xcov
-        end
+        P̄ = [sol.P zeros(m.n+m.m, m.m) sol.Q*m.Φ; zeros(m.p,m.n+m.m) m.Φ]
     end
+    Q̄ = [sol.Q*m.Ω; m.Ω]
+    cov = zeros(m.n + m.m + m.p, m.n + m.m + m.p)
+
+    itermax = 1000
+    damp = 0.50
+    iter = 1
+    while iter <= itermax
+        covUpd = P̄ * cov * P̄' + Q̄ * m.Σ * Q̄'
+        dist = maximum(abs.(covUpd - cov))
+        (log10(dist) < -7) && break
+        iter += 1
+        cov = damp * covUpd + (1-damp) * cov
+    end
+
     stdev = sqrt.(diag(cov))
     stdev_mat = diagm(0 => sqrt.(diag(cov)))
-    cor = inv(stdev_mat) * cov * inv(stdev_mat)
+    inv_stdev_mat = inv(stdev_mat)
+    inv_stdev_mat[stdev_mat .== 0] .= 0.0
+    cor = inv_stdev_mat * cov * inv_stdev_mat
 
     return cov, cor
 end
