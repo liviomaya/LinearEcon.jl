@@ -22,54 +22,32 @@ function model(A,B,C,Σ,n)
 end
 # m = model(A,B,C,Σ,n)
 
-model(A,B,C,D,Σ,n) = model(A,B,C,D,zeros(size(A,1),1),Σ,n)
-
 function addauxiliaries(m0::model)
-        n,m,p = m0.n, m0.m, m0.p
-        nmp = n + m + p
-        nm = n + m
-        A, B, C, D, F = m0.A, m0.B, m0.C, m0.D, m0.F
+        n, m, q = m0.n, m0.m, m0.q
+        neq = n + m
+        A, B, C, Σ = m0.A, m0.B, m0.C, m0.Σ
         Iaux = [false for i in 1:nmp]
 
-        # If no static variable, add independent one
-        if m0.p == 0
-                A = [A; 1 zeros(1,nm-1)]
-                B = [B; 0]
-                C = [C zeros(nmp); zeros(1,nmp) 1]
-                D = [D; zeros(1,m0.q)]
-                F = [F; 0]
-                Iaux = [Iaux; true]
-                p += 1
-                nmp += 1
-        end
-
         # If no state variable, include an independent one
-        if m0.n == 0
-                A = [1 zeros(1,nm); zeros(nmp) A]
-                B = [0.0; B]
-                C = [0.50 zeros(1,nmp); zeros(nmp) C]
-                D = [zeros(1,m0.q); D]
-                F = [0; F]
-                Iaux = [true; Iaux]
-                n += 1
-                nm += 1
-                nmp += 1
+        if n == 0
+            A = [1 zeros(1,neq); zeros(neq) A]
+            B = [0.20 zeros(1,neq); zeros(neq) B]
+            C = [zeros(1, q); C]
+            Iaux = [true; Iaux]
+            n += 1
+            neq += 1
         end
 
-        # If no forward looking variable, include an independent one
-        if m0.m == 0
-                A = [A[1:nm,:] zeros(nm); zeros(1,nm) 1; A[nm+1:end,:] zeros(p)]
-                B = [B[1:nm,1]; 0.0; B[nm+1:end,1]]
-                C = [C[1:nm,1:nm] zeros(nm) C[1:nm,nm+1:end]; zeros(1,nm) 1.5 zeros(1,p);
-                C[nm+1:end,1:nm] zeros(p) C[nm+1:end,nm+1:end]]
-                D = [D[1:nm,:]; zeros(1,m0.q); D[nm+1:end,:]]
-                F = [F[1:nm,:]; zeros(1,m0.r); F[nm+1:end,:]]
-                Iaux = [Iaux[1:nm,1]; true; Iaux[nm+1:end,1]]
-                m += 1
-                nm += 1
-                nmp += 1
+        # If no forward looking / static variable, include an independent one
+        if m == 0
+            A = [A zeros(neq); zeros(1,neq) 1]
+            B = [B zeros(neq); zeros(1,neq) 1.5]
+            C = [C; zeros(1, q)]
+            Iaux = [Iaux; true]
+            m += 1
+            neq += 1
         end
-        m1 = model(A,B,C,D,F,m0.Σ,n)
+        m1 = model(A,B,C,Σ,n)
         return m1, Iaux
 end
 
