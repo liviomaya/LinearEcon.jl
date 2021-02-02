@@ -21,9 +21,7 @@ struct dpsolution
 end
 
 struct solution
-    c::Array{Float64,2}
     P::Array{Float64,2}
     Q::Array{Float64,2}
-    dp::dpsolution
 end
 # sol = solution(c,P,Q,dp)
