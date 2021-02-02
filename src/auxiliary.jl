@@ -12,3 +12,11 @@ function standardinitialx0(m)
         return zeros(m.n)
     end
 end
+
+function standardinitialu0(m)
+    if m.p == 0
+        return 0.0
+    else
+        return zeros(m.p)
+    end
+end
