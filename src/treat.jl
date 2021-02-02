@@ -80,38 +80,3 @@ function submatrices(m0::model)
 
         return A11,A12,A21,A22,A31,A32, B1,B2,B3, C11,C12,C13,C21,C22,C23,C31,C32,C33, D1,D2,D3, F1,F2,F3
 end
-
-function dynmodel(m0::model)
-
-        A11,A12,A21,A22,A31,A32, B1,B2,B3, C11,C12,C13,C21,C22,C23,C31,C32,C33, D1,D2,D3, F1,F2,F3 = submatrices(m0)
-
-        Ah1 = [A11 A12; A21 A22]
-        Ah2 = [A31 A32]
-        Bh1 = [B1; B2]
-        Bh2 = B3
-        Ch11 = [C11 C12; C21 C22]
-        Ch12 = [C13; C23]
-        Ch21 = [C31 C32]
-        Ch22 = C33
-        Dh1 = [D1; D2]
-        Dh2 = D3
-        Fh1 = [F1; F2]
-        Fh2 = F3
-
-        det(Ch22)==0 && error("Can't express static variables as functions of dynamic variables. Please re-order equations. (Ĉ₂₂ not invertible).")
-
-        Gh = Ah1 - Ch12 * inv(Ch22) * Ah2
-        Hh = Bh1 - Ch12 * inv(Ch22) * Bh2
-        Jh = Ch11 - Ch12 * inv(Ch22) * Ch21
-        Kh = Dh1 - Ch12 * inv(Ch22) * Dh2
-        Lh = Fh1 - Ch12 * inv(Ch22) * Fh2
-
-        H = inv(Gh) * Hh
-        J = inv(Gh) * Jh
-        K = inv(Gh) * Kh * m0.Σ
-        L = inv(Gh) * Lh
-        H,J,K,L = map(fix_type, (H,J,K,L))
-        dm = dynmodel(H,J,K,L,m0.n,m0.m,m0.q,m0.r)
-        return dm
-end
-# dm = dynmodel(m)
