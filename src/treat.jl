@@ -13,26 +13,27 @@ function fix_type(x)
 end
 
 # build model structure
-function model(A,B,C,Σ,n)
+function model(A,B,C,Φ,Ω,Σ,n)
     m = size(A,1) - n
+    p = size(C,2)
     q = size(Σ,1)
-    A,B,C,Σ = map(fix_type, (A,B,C,Σ))
-    m = model(A,B,C,Σ,n,m,q)
+    A,B,C,Φ,Ω,Σ = map(fix_type, (A,B,C,Φ,Ω,Σ))
+    m = model(A,B,C,Φ,Ω,Σ,n,m,p,q)
     return m
 end
-# m = model(A,B,C,Σ,n)
+# m = model(A,B,C,Φ,Ω,Σ,n)
 
 function addauxiliaries(m0::model)
-        n, m, q = m0.n, m0.m, m0.q
+        n, m, p = m0.n, m0.m, m0.p
         neq = n + m
-        A, B, C, Σ = m0.A, m0.B, m0.C, m0.Σ
+        A, B, C, Φ, Ω, Σ = m0.A, m0.B, m0.C, m0.Φ, m0.Ω, m0.Σ
         Iaux = [false for i in 1:nmp]
 
         # If no state variable, include an independent one
         if n == 0
             A = [1 zeros(1,neq); zeros(neq) A]
             B = [0.20 zeros(1,neq); zeros(neq) B]
-            C = [zeros(1, q); C]
+            C = [zeros(1, p); C]
             Iaux = [true; Iaux]
             n += 1
             neq += 1
@@ -42,12 +43,12 @@ function addauxiliaries(m0::model)
         if m == 0
             A = [A zeros(neq); zeros(1,neq) 1]
             B = [B zeros(neq); zeros(1,neq) 1.5]
-            C = [C; zeros(1, q)]
+            C = [C; zeros(1, p)]
             Iaux = [Iaux; true]
             m += 1
             neq += 1
         end
-        m1 = model(A,B,C,Σ,n)
+        m1 = model(A,B,C,Φ,Ω,Σ,n)
         return m1, Iaux
 end
 
