@@ -27,7 +27,7 @@ function addauxiliaries(m0::model)
         n, m, p = m0.n, m0.m, m0.p
         neq = n + m
         A, B, C, Φ, Ω, Σ = m0.A, m0.B, m0.C, m0.Φ, m0.Ω, m0.Σ
-        Iaux = [false for i in 1:nmp]
+        Iaux = [false for i in 1:neq]
 
         # If no state variable, include an independent one
         if n == 0

@@ -46,8 +46,8 @@ function solvemodel(m0::model)
         Ct1 = Ct[1:n,:]
         Ct2 = Ct[n+1:end,:]
 
-        vecM = inv( ( kron(Φ', S22) - kron(collect(I(nq)), T22) )  ) * Ct2[:]
-        M = reshape(vecM, m+p, nq)
+        vecM = inv( ( kron(Φ', S22) - kron(collect(I(p)), T22) )  ) * Ct2[:]
+        M = reshape(vecM, m, p)
 
         Py = Z21 * inv(Z11)
         Qy = (Z22 - Z21*inv(Z11)*Z12) * M
