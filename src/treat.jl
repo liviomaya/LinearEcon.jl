@@ -13,16 +13,14 @@ function fix_type(x)
 end
 
 # build model structure
-function model(A,B,C,D,F,Σ,n)
-    m = size(A,2) - n
-    p = size(A,1) - n - m
+function model(A,B,C,Σ,n)
+    m = size(A,1) - n
     q = size(Σ,1)
-    r = size(F,2)
-    A,B,C,D,F,Σ = map(fix_type, (A,B,C,D,F,Σ))
-    m = model(A,B,C,D,F,Σ,n,m,p,q,r)
+    A,B,C,Σ = map(fix_type, (A,B,C,Σ))
+    m = model(A,B,C,Σ,n,m,q)
     return m
 end
-# m = model(A,B,C,D,F,Σ,n)
+# m = model(A,B,C,Σ,n)
 
 model(A,B,C,D,Σ,n) = model(A,B,C,D,zeros(size(A,1),1),Σ,n)
 
