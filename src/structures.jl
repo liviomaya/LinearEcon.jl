@@ -7,6 +7,7 @@ struct model
     Σ::Array{Float64,2}
     n::Int64
     m::Int64
+    p::Int64
     q::Int64
 end
 # m = model(A,B,C,Σ,n,m,q)
