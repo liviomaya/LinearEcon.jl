@@ -9,18 +9,6 @@ struct model
 end
 # m = model(A,B,C,Σ,n,m,q)
 
-struct dynmodel
-    H::Array{Float64,2}
-    J::Array{Float64,2}
-    K::Array{Float64,2}
-    L::Array{Float64,2}
-    n::Int64
-    m::Int64
-    q::Int64
-    r::Int64
-end
-# dm = dynmodel(H,J,K,L,n,m,q,r)
-
 struct dpsolution
     Λ2::Array{Float64,2}
     Lt2::Array{Float64,2}
