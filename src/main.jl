@@ -1,11 +1,6 @@
 function solvemodel(m0::model)
-
-        #dm = dynmodel(m0)
-        #cx,cy,Px,Py,Qx,Qy,Λ2,Lt2,Mx0,My0,αx,αy = dynsolution(dm)
-        #A11,A12,A21,A22,A31,A32, B1,B2,B3, C11,C12,C13,C21,C22,C23,C31,C32,C33, D1,D2,D3, F1,F2,F3 = submatrices(m0)
-
-        A, B, C, Φ, Ω, Σ = m0.A, m0.B, m0.C, m0.Φ, m0.Ω, m0.Σ
-        n, m, p, q = m0.n, m0.m, m0.p, m0.q
+        A, B, C, Σ = m0.A, m0.B, m0.C, m0.Σ
+        n, m, q = m0.n, m0.m, m0.q
         
         F = schur(B, A)
         Istable = abs.(F.α) .< abs.(F.β)
@@ -46,14 +41,13 @@ function solvemodel(m0::model)
         Ct1 = Ct[1:n,:]
         Ct2 = Ct[n+1:end,:]
 
-        vecM = inv( ( kron(Φ', S22) - kron(collect(I(p)), T22) )  ) * Ct2[:]
-        M = reshape(vecM, m, p)
+        M = -inv(T22)*Ct2
 
         Py = Z21 * inv(Z11)
         Qy = (Z22 - Z21*inv(Z11)*Z12) * M
 
         Px = Z11*inv(S11)*T11*inv(Z11)
-        Qx = (Z12 - Z11*inv(S11)*S12)*M*Φ + (Z11*inv(S11)*T12 - Z11*inv(S11)*T11*inv(Z11)*Z12)*M + Z11*inv(S11)*Ct1
+        Qx = Z11*inv(S11)*((T12 - T11*inv(Z11)*Z12)*M + Ct1)
 
         P = [Px; Py]
         Q = [Qx; Qy]

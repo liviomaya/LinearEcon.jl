@@ -40,27 +40,28 @@ Compute the covariance and correlation matrices `V` and `R`, respectivelly, of t
 """
 function covariance(m::model, sol::solution)
 
+    Σ = m.Σ
+    P, Q = sol.P, sol.Q
     if m.n == 0
-        P̄ = [zeros(m.m,m.m) sol.Q*m.Φ; zeros(m.p,m.m) m.Φ]
-    elseif m.m == 0
-        P̄ = [sol.P sol.Q*m.Φ; zeros(m.p,m.n) m.Φ]
+        cov = Q * Σ * Q'
     else
-        P̄ = [sol.P zeros(m.n+m.m, m.m) sol.Q*m.Φ; zeros(m.p,m.n+m.m) m.Φ]
+        itermax = 1000
+        damp = 0.50
+        cov = zeros(m.n + m.m, m.n + m.m)
+        if m.m > 0
+            P̄ = [P zeros(m.m+m.n,m.m)]
+        else
+            P̄ = P
+        end
+        iter = 1
+        while iter <= itermax
+            covUpd = P̄ * cov * P̄' + Q * Σ * Q'
+            dist = maximum(abs.(covUpd - cov))
+            (log10(dist) < -7) && break
+            iter += 1
+            cov = damp * covUpd + (1-damp) * cov
+        end      
     end
-    Q̄ = [sol.Q*m.Ω; m.Ω]
-    cov = zeros(m.n + m.m + m.p, m.n + m.m + m.p)
-
-    itermax = 1000
-    damp = 0.50
-    iter = 1
-    while iter <= itermax
-        covUpd = P̄ * cov * P̄' + Q̄ * m.Σ * Q̄'
-        dist = maximum(abs.(covUpd - cov))
-        (log10(dist) < -7) && break
-        iter += 1
-        cov = damp * covUpd + (1-damp) * cov
-    end
-
     stdev = sqrt.(diag(cov))
     stdev_mat = diagm(0 => sqrt.(diag(cov)))
     inv_stdev_mat = inv(stdev_mat)
@@ -77,19 +78,17 @@ end
 Compute a path for the model `m` with solution `sol`. Returns an `n`+`m`+`p` × `T` array `X`.
 
 # Keyword Arguments
-`T`: number of periods. 25 if not specified.
+`T`: number of periods. Default = 25.
 
-`ϵ`: `q` × `T` vector of structural shocks. Drawn from i.i.d. Gaussian if not specified.
+`ϵ`: `q` × `T` vector of structural shocks. Default drawn from i.i.d. Gaussian.
 
-`dp`: `r` × `T` deterministic process. Zeros if not specified. `path` assumes that the final value of the deterministic process is the last entry in `dp`.
+`x0`: initial condition for state variables. Zeros if not specified.
 
-`devSS`: `TRUE` to represent variables as deviation from their steady-state values. `TRUE` if not specified.
+`u0`: initial condition for VAR process. Zeros if not specified.
 
-`x0`: initial condition for state variables. Steady state values if not specified.
+`displayFigure`: `TRUE` to display figure. Default = `TRUE`.
 
-`displayFigure`: `TRUE` to display figure. `TRUE` if not specified.
-
-`varIndex`: array with indices of variables to be displayed in the plot. All variables assigned if not specified.
+`varIndex`: array with indices of variables to be displayed in the plot. Order of reference: `[x y u]`. All variables assigned if not specified.
 
 `labels`: one-dimensional string array with labels for the variables ploted.
 
@@ -97,15 +96,13 @@ Compute a path for the model `m` with solution `sol`. Returns an `n`+`m`+`p` × 
 
 `saveName`: if passed, save figure under the name `saveName`.
 """
-function path(m0::model, sol::solution; T::Int64=25, ϵ=randn(m0.q,T), dp=zeros(m0.r,T), devSS = true, x0=standardinitialx0(m0,sol), displayFigure = true, varIndex = 1:(m0.n+m0.m+m0.p), labels=nothing, title=nothing, saveName=nothing)
+function path(m0::model, sol::solution; T::Int64=25, ϵ=randn(m0.q,T), x0=standardinitialx0(m), u0=standardinitialu0(m), displayFigure = true, varIndex = 1:(m0.n+m0.m+m0.p), labels=nothing, title=nothing, saveName=nothing)
 
-    n, m, p, q, r = m0.n, m0.m, m0.p, m0.q, m0.r
+    n, m, p, q = m0.n, m0.m, m0.p, m0.q
+    P, Q = sol.P, sol.Q
     Iaux = addauxiliaries(m0)[2]
     if size(ϵ,1) != q
         error("Matrix ϵ must have q = $(q) rows.")
-    end
-    if size(dp,1) != r
-        error("Matrix dp must have r = $(r) rows.")
     end
     if (n > 0) && (size(x0,1) != n)
         error("Initial state x0 must have n = $(n) rows.")
@@ -114,15 +111,27 @@ function path(m0::model, sol::solution; T::Int64=25, ϵ=randn(m0.q,T), dp=zeros(
         error("Shock sequence ϵ must have at least T = $(T) columns.")
     end
     Path = zeros(n + m + p, T)
-    onlypredet = (m + p == 0)
-    nopredet = (n == 0)
-    alltypes = !onlypredet && !nopredet
-    !nopredet && (Path[1:n, 1] = x0)
+
+    no_state = (n==0)
+    no_exo = (p==0)
+    no_for = (m==0)
+    #!no_state && (Path[1:n, 1] = x0)
+    #!no_exo && (Path[n+m+1:end, 1] = u0)
+
+
     for t in 1:T
-        dpfuturepath = (t >= size(dp,2)) ? dp[:,end] : dp[:,t:end]
-        dpcomponent = dpdiscountedsum(sol.dp, dpfuturepath)[.!Iaux]
-        if nopredet
-            Path[:,t] = sol.c + sol.Q * ϵ[:,t] + dpcomponent
+        #if no_state && no_exo
+        #    Path[:,t] = zeros(n)
+        #elseif no_exo
+        #    state = (t==1) ? x0 : Path[1:n, t-1]
+        #    Path[:,t] = P*state
+        #elseif no_state
+            
+
+
+
+        if no_state
+            Path[:,t] = sol.Q * ϵ[:,t] + dpcomponent
         else
             state = (t==1) ? x0 : Path[1:n, t-1]
             Path[1:n, t] = sol.c[1:n,1] + sol.P[1:n,:] * state + sol.Q[1:n, :] * ϵ[:,t] + dpcomponent[1:n,1]
@@ -130,11 +139,6 @@ function path(m0::model, sol::solution; T::Int64=25, ϵ=randn(m0.q,T), dp=zeros(
                 Path[n+1:end, t] = sol.c[n+1:end,1] + sol.P[n+1:end,:] * state + sol.Q[n+1:end, :] * ϵ[:,t] + dpcomponent[n+1:n+m+p,1]
             end
         end
-    end
-
-    if devSS
-        SS = ss(m0,sol)
-        Path .-= SS*ones(1,T)
     end
 
     if displayFigure || !isnothing(saveName)
