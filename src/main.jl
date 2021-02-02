@@ -71,7 +71,6 @@ function solution(m0::model)
         m1, Iaux = addauxiliaries(m0)
         sol1 = solvemodel(m1)
         # Remove auxiliaries
-        c = sol1.c[.!Iaux, 1]
         if m0.n == 0
                 P = [0.0, 0.0]
         else
@@ -79,55 +78,8 @@ function solution(m0::model)
         end
         Q = sol1.Q[.!Iaux, :]
 
-        if m0.m == 0
-                Mx0 = sol1.dp.Mx0
-                My0 = zeros(1,m0.r)
-                αx = zeros(m0.n, 1)
-                αy = zeros(1, 1) # irrelevant
-                Λ2 = 1.5 # irrelevant
-                Lt2 = zeros(1, m0.r)
-                if m0.p > 0
-                        Mz0 = sol1.dp.Mz0
-                        αz = zeros(m0.p, 1)
-                elseif m0.p == 0
-                        Mz0 = zeros(1,m0.r)
-                        αz = 0.0
-                end
-        elseif m0.n == 0
-                Mx0 = zeros(1,m0.r)
-                My0 = sol1.dp.My0
-                αx = zeros(1, m0.m)
-                αy = sol1.dp.αy
-                Λ2 = sol1.dp.Λ2
-                Lt2 = sol1.dp.Lt2
-                if m0.p > 0
-                        Mz0 = sol1.dp.Mz0
-                        αz = sol1.dp.αz
-                elseif m0.p == 0
-                        Mz0 = zeros(1, m0.r)
-                        αz = zeros(1, m0.m)
-                end
-        else
-                Mx0 = sol1.dp.Mx0
-                My0 = sol1.dp.My0
-                αx = sol1.dp.αx
-                αy = sol1.dp.αy
-                Λ2 = sol1.dp.Λ2
-                Lt2 = sol1.dp.Lt2
-                if m0.p > 0
-                        Mz0 = sol1.dp.Mz0
-                        αz = sol1.dp.αz
-                elseif m0.p == 0
-                        Mz0 = zeros(1, m0.r)
-                        αz = zeros(1, m0.m)
-                end
-        end
-
-        Λ2,Lt2,Mx0,My0,Mz0,αx,αy,αz,c,P,Q = map(x -> round.(x, digits=8), [Λ2,Lt2,Mx0,My0,Mz0,αx,αy,αz,c,P,Q])
-        Λ2,Lt2,Mx0,My0,Mz0,αx,αy,αz,c,P,Q = map(x -> fix_type(x), [Λ2,Lt2,Mx0,My0,Mz0,αx,αy,αz,c,P,Q])
-
-        dp1 = dpsolution(Λ2,Lt2,Mx0,My0,Mz0,αx,αy,αz)
-        sol = solution(c,P,Q,dp1)
-
+        P,Q = map(x -> round.(x, digits=10), [P,Q])
+        P,Q = map(x -> fix_type(x), [P,Q])
+        sol = solution(P,Q)
         return sol
 end
