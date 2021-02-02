@@ -2,16 +2,12 @@ struct model
     A::Array{Float64,2}
     B::Array{Float64,2}
     C::Array{Float64,2}
-    D::Array{Float64,2}
-    F::Array{Float64,2}
     Σ::Array{Float64,2}
     n::Int64
     m::Int64
-    p::Int64
     q::Int64
-    r::Int64
 end
-# m = model(A,B,C,D,F,Σ,n,m,p,q,r)
+# m = model(A,B,C,Σ,n,m,q)
 
 struct dynmodel
     H::Array{Float64,2}
