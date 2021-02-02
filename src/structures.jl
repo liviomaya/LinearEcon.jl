@@ -2,6 +2,8 @@ struct model
     A::Array{Float64,2}
     B::Array{Float64,2}
     C::Array{Float64,2}
+    Φ::Array{Float64,2}
+    Ω::Array{Float64,2}
     Σ::Array{Float64,2}
     n::Int64
     m::Int64
