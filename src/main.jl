@@ -72,7 +72,7 @@ function solution(m0::model)
         sol1 = solvemodel(m1)
         # Remove auxiliaries
         if m0.n == 0
-                P = [0.0, 0.0]
+                P = [0.0]
         else
                 P = sol1.P[.!Iaux, .!Iaux[1:m1.n]]
         end
