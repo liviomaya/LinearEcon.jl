@@ -73,9 +73,9 @@ end
 
 """
     X = path(m, sol)
-    X = path(m, sol; T, ϵ, dp, devSS, x0, displayFigure, varIndex, labels, title)
+    X = path(m, sol; T, ϵ, x0, displayFigure, varIndex, labels, title)
 
-Compute a path for the model `m` with solution `sol`. Returns an `n`+`m`+`p` × `T` array `X`.
+Compute a path for the model `m` with solution `sol`. Returns an `n`+`m` × `T` array `X`.
 
 # Keyword Arguments
 `T`: number of periods. Default = 25.
@@ -84,11 +84,9 @@ Compute a path for the model `m` with solution `sol`. Returns an `n`+`m`+`p` × 
 
 `x0`: initial condition for state variables. Zeros if not specified.
 
-`u0`: initial condition for VAR process. Zeros if not specified.
-
 `displayFigure`: `TRUE` to display figure. Default = `TRUE`.
 
-`varIndex`: array with indices of variables to be displayed in the plot. Order of reference: `[x y u]`. All variables assigned if not specified.
+`varIndex`: array with indices of variables to be displayed in the plot. All variables assigned if not specified.
 
 `labels`: one-dimensional string array with labels for the variables ploted.
 
@@ -96,9 +94,9 @@ Compute a path for the model `m` with solution `sol`. Returns an `n`+`m`+`p` × 
 
 `saveName`: if passed, save figure under the name `saveName`.
 """
-function path(m0::model, sol::solution; T::Int64=25, ϵ=randn(m0.q,T), x0=standardinitialx0(m), u0=standardinitialu0(m), displayFigure = true, varIndex = 1:(m0.n+m0.m+m0.p), labels=nothing, title=nothing, saveName=nothing)
+function path(m0::model, sol::solution; T::Int64=25, ϵ=randn(m0.q,T), x0=standardinitialx0(m0), displayFigure = true, varIndex = 1:(m0.n+m0.m), labels=nothing, title=nothing, saveName=nothing)
 
-    n, m, p, q = m0.n, m0.m, m0.p, m0.q
+    n, m, q = m0.n, m0.m, m0.q
     P, Q = sol.P, sol.Q
     Iaux = addauxiliaries(m0)[2]
     if size(ϵ,1) != q
@@ -110,42 +108,25 @@ function path(m0::model, sol::solution; T::Int64=25, ϵ=randn(m0.q,T), x0=standa
     if (size(ϵ,2) < T)
         error("Shock sequence ϵ must have at least T = $(T) columns.")
     end
-    Path = zeros(n + m + p, T)
 
+    Path = zeros(n + m, T)
     no_state = (n==0)
-    no_exo = (p==0)
-    no_for = (m==0)
-    #!no_state && (Path[1:n, 1] = x0)
-    #!no_exo && (Path[n+m+1:end, 1] = u0)
-
-
     for t in 1:T
-        #if no_state && no_exo
-        #    Path[:,t] = zeros(n)
-        #elseif no_exo
-        #    state = (t==1) ? x0 : Path[1:n, t-1]
-        #    Path[:,t] = P*state
-        #elseif no_state
-            
-
-
-
         if no_state
-            Path[:,t] = sol.Q * ϵ[:,t] + dpcomponent
+            Path[:,t] = Q * ϵ[:,t]
         else
             state = (t==1) ? x0 : Path[1:n, t-1]
-            Path[1:n, t] = sol.c[1:n,1] + sol.P[1:n,:] * state + sol.Q[1:n, :] * ϵ[:,t] + dpcomponent[1:n,1]
-            if !onlypredet
-                Path[n+1:end, t] = sol.c[n+1:end,1] + sol.P[n+1:end,:] * state + sol.Q[n+1:end, :] * ϵ[:,t] + dpcomponent[n+1:n+m+p,1]
-            end
+            Path[:, t] = P * state + Q * ϵ[:,t]
         end
     end
 
     if displayFigure || !isnothing(saveName)
         label = isnothing(labels) ? :none : permutedims(labels)
         fig = plot(xlim=(1,Inf), gridalpha=0.05, legend=:topright)
+
         plot!(fig, 1:T, Path[varIndex,:]', markershape =:circle, lw = 2, ms = 6, title = title, label = label)
-        devSS && plot!(fig, 1:T, zeros(T), color =:black, alpha=0.15, label = :none)
+
+        plot!(fig, 1:T, zeros(T), color =:black, alpha=0.15, label = :none)
     end
 
     if displayFigure
@@ -160,8 +141,6 @@ function path(m0::model, sol::solution; T::Int64=25, ϵ=randn(m0.q,T), x0=standa
 
     return Path
 end
-
-
 
 
 """
@@ -184,12 +163,12 @@ Compute the impulse response functions for model `m` with solution `sol` to a on
 `saveName`: if passed, save figure under the name `saveName`.
 
 """
-function irf(m0::model, sol::solution, i::Int64; T::Int64=25, displayFigure = true, varIndex = 1:(m0.n+m0.m+m0.p), labels=nothing, title = nothing, saveName = nothing)
-    n, m, p, q, r = m0.n, m0.m, m0.p, m0.q, m0.r
-    Irf = zeros(n+m+p, T)
+function irf(m0::model, sol::solution, i::Int64; T::Int64=25, displayFigure = true, varIndex = 1:(m0.n+m0.m), labels=nothing, title = nothing, saveName = nothing)
+    n, m, q = m0.n, m0.m, m0.q
+    Irf = zeros(n+m, T)
     ϵ = zeros(q,T)
     ϵ[i,1] = 1.
-    Irf = path(m0, sol; T=T, ϵ=ϵ, displayFigure = displayFigure, varIndex = varIndex, labels=labels, title=title)
+    Irf = path(m0, sol; T=T, ϵ=ϵ, displayFigure = displayFigure, varIndex = varIndex, labels=labels, title=title, saveName = saveName)
     return Irf
 end
 
@@ -201,9 +180,9 @@ end
 Compute the impulse response functions for model `m` with solution `sol` to every innovation in the model. Returns an `n`+`m`+`p` × `T` × `q` array `X`. All variables represented as deviations from their steady state values. No `saveName` option.
 
 """
-function irf(m0::model, sol::solution; T::Int64=25, displayFigure = true, varIndex = 1:(m0.n+m0.m+m0.p), labels=nothing)
-    n, m, p, q, r = m0.n, m0.m, m0.p, m0.q, m0.r
-    Irf = zeros(n+m+p, T, q)
+function irf(m0::model, sol::solution; T::Int64=25, displayFigure = true, varIndex = 1:(m0.n+m0.m), labels=nothing)
+    n, m, q = m0.n, m0.m, m0.q
+    Irf = zeros(n+m, T, q)
     for iq in 1:q
         ϵ = zeros(q,T)
         ϵ[iq,1] = 1.0
