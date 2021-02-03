@@ -1,4 +1,4 @@
-# comment 
+
 function price_stock()
 
     #=  PRICE OF A STOCK
@@ -10,8 +10,7 @@ function price_stock()
 
     neq = 2 # number of equations/variables
     nn = 1 # number of state variables
-    nm = 1 # number of forward looking variables
-    np = 0 # number of static variables
+    nm = 1 # number of non-state variables
     nq = 1 # number of exogenous variables
 
     # parameters
@@ -20,32 +19,30 @@ function price_stock()
     σ = 1.0
 
     # define variable indices
-    d,s = 1:2
+    d, s = 1:2
     e = 1
 
     # define matrices
-    A = zeros(neq,nn+nm)
-    B = zeros(neq)
-    C = zeros(neq,neq)
-    D = zeros(neq,nq)
+    A = zeros(neq,neq)
+    B = zeros(neq,neq)
+    C = zeros(neq,nq)
     Σ = zeros(nq,nq)
 
     # equation (1): dₜ = ρ dₜ₋₁ + ϵₜ 
     A[1,d] = 1
-    C[1,d] = ρ
-    D[1,e] = 1
+    B[1,d] = ρ
+    C[1,e] = 1
 
     # equation (2): sₜ = dₜ + β Eₜsₜ₊₁
     A[2,s] = -β
     A[2,d] = -1
-    C[2,s] = -1
+    B[2,s] = -1
 
     # covariance matrix
     Σ = [σ]
 
-    m = model(A,B,C,D,Σ,nn) # define model object
+    m = model(A,B,C,Σ,nn) # define model object
     sol = solution(m) # solve model
-    SS = ss(m, sol) # calculate steady state
     Cov, Cor = covariance(m, sol) # covariance and correlation matrices
 
     # plot options
@@ -71,8 +68,7 @@ function old_keynesian()
 
     neq = 3 # number of equations/variables
     nn = 2 # number of state variables
-    nm = 0 # number of forward looking variables
-    np = 1 # number of static variables
+    nm = 1 # number of non-state variables
     nq = 1 # number of exogenous variables
 
     # parameters
@@ -88,35 +84,34 @@ function old_keynesian()
     e = 1
 
     # define matrices
-    A = zeros(neq,nn+nm)
-    B = zeros(neq)
-    C = zeros(neq,neq)
-    D = zeros(neq,nq)
+    A = zeros(neq,neq)
+    B = zeros(neq,neq)
+    C = zeros(neq,nq)
     Σ = zeros(nq,nq)
 
     # equation (1): xₜ = xₜ₋₁ - γ (iₜ - πₜ₋₁) 
     A[1,x] = 1
-    C[1,x] = 1
-    C[1,ir] = -γ
-    C[1,pi] = γ
+    B[1,x] = 1
+    B[1,ir] = -γ
+    B[1,pi] = γ
 
     # equation (2): πₜ = β πₜ₋₁ + κ xₜ
     A[2,pi] = 1
     A[2,x] = -κ
-    C[2,pi] = β
+    B[2,pi] = β
 
     # equation (3): iₜ = θ₁ xₜ + θ₂ πₜ + ϵ
     A[3,x] = -θ1
     A[3,pi] = -θ2
-    C[3,ir] = -1
-    D[3,e] = 1
+    B[3,ir] = -1
+    C[3,e] = 1
 
     # covariance matrix
     Σ = [σ]
 
-    m = model(A,B,C,D,Σ,nn) # define model object
+    m = model(A,B,C,Σ,nn) # define model object
     sol = solution(m) # solve model
-    SS = ss(m, sol) # calculate steady state
+    #SS = ss(m, sol) # calculate steady state
     Cov, Cor = covariance(m, sol) # covariance and correlation matrices
 
     # plot options
@@ -132,26 +127,23 @@ old_keynesian()
 function frictionless_mon_dominance()
     #= FRICTIONLESS MODEL UNDER MONETARY DOMINANCE
         (1) vₜ = ρ vₜ₋₁ + ϵ₁ₜ
-        (2) rₜ = (1-ν) r̄ + ν rₜ₋₁ + ϵ₂ₜ
+        (2) rₜ = ν rₜ₋₁ + ϵ₂ₜ
         (3) iₜ = rₜ + Eₜπₜ₊₁
-        (4) iₜ = r̄ + πbar + θ (πₜ - πbar) + vₜ
+        (4) iₜ = θ πₜ + vₜ
 
         st.dev(ϵ₁) = σ₁
         st.dev(ϵ₂) = σ₂
     =#
 
     neq = 4 # number of equations/variables
-    n = 2 # number of state variables
-    m = 1 # number of forward looking variables
-    p = 1 # number of static variables
-    q = 2 # number of exogenous variables
+    nn = 2 # number of state variables
+    nm = 2 # number of non-state variables
+    nq = 2 # number of exogenous variables
 
     # parameters
     ρ = 0.75
     ν = 0.75
-    r̄ = 0.01
     θ = 1.5
-    πbar = 0.02
     σ₁ = 0.01
     σ₂ = 0.03
 
@@ -160,54 +152,51 @@ function frictionless_mon_dominance()
     e1, e2 = 1:2
 
     # define matrices
-    A = zeros(neq,n+m)
-    B = zeros(neq)
-    C = zeros(neq,neq)
-    D = zeros(neq,q)
-    Σ = zeros(q,q)
+    A = zeros(neq,neq)
+    B = zeros(neq,neq)
+    C = zeros(neq,nq)
+    Σ = zeros(nq,nq)
 
     # equation (1): vₜ = ρ vₜ₋₁ + ϵ₁ₜ
     A[1,v] = 1
-    C[1,v] = ρ
-    D[1,e1] = 1
+    B[1,v] = ρ
+    C[1,e1] = 1
 
-    # equation (2): rₜ = (1-ν) r̄ + ν rₜ₋₁ + ϵ₂ₜ
+    # equation (2): rₜ = ν rₜ₋₁ + ϵ₂ₜ
     A[2,r] = 1
-    B[2] = (1-ν)*r̄
-    C[2,r] = ν
-    D[2,e2] = 1
+    B[2,r] = ν
+    C[2,e2] = 1
 
     # equation (3): iₜ = rₜ + Eₜπₜ₊₁
     A[3,pi] = -1
     A[3,r] = -1
-    C[3,ir] = -1
+    B[3,ir] = -1
 
-    # equation (4): iₜ = r̄ + πbar + θ (πₜ - πbar) + vₜ
+    # equation (4): iₜ = θ πₜ + vₜ
     A[4,v] = -1
-    B[4] = r̄ + (1-θ)*πbar
-    C[4,pi] = θ
-    C[4,ir] = -1
+    B[4,pi] = θ
+    B[4,ir] = -1
 
     # covariance matrix
     Σ[e1,e1] = σ₁
     Σ[e2,e2] = σ₂
 
-    m = model(A,B,C,D,Σ,n) # define model
+    m = model(A,B,C,Σ,nn) # define model
     sol = solution(m) # solve model
-    SS = ss(m, sol) # calculate steady state
+    #SS = ss(m, sol) # calculate steady state
 
     varIndex = 2:4 # display real interest, inflation and nominal rate
     labels = ["Real Interest", "Inflation", "Nominal Interest"]
 
     irf(m, sol, varIndex=varIndex, labels=labels)
-    path(m, sol, varIndex=varIndex, labels=labels, title="Simulation", devSS = false)
+    path(m, sol, varIndex=varIndex, labels=labels, title="Simulation")
     nothing
 end
 frictionless_mon_dominance()
 
 function three_eq_nk()
 
-    #=  THREE EQUATION NY MODEL
+    #=  THREE EQUATION NK MODEL
         (1) xₜ = Eₜxₜ₊₁ - γ (iₜ - Eₜπₜ₊₁) 
         (2) πₜ = β Eₜπₜ₊₁ + κ xₜ
         (3) iₜ = θ₁ xₜ + θ₂ πₜ + ϵ
@@ -218,8 +207,7 @@ function three_eq_nk()
 
     neq = 3 # number of equations/variables
     nn = 0 # number of state variables
-    nm = 2 # number of forward looking variables
-    np = 1 # number of static variables
+    nm = 3 # number of non-state variables
     nq = 1 # number of exogenous variables
 
     # parameters
@@ -235,35 +223,34 @@ function three_eq_nk()
     e = 1
 
     # define matrices
-    A = zeros(neq,nn+nm)
-    B = zeros(neq)
-    C = zeros(neq,neq)
-    D = zeros(neq,nq)
+    A = zeros(neq,neq)
+    B = zeros(neq,neq)
+    C = zeros(neq,nq)
     Σ = zeros(nq,nq)
 
     # equation (1): xₜ = Eₜxₜ₊₁ - γ (iₜ - Eₜπₜ₊₁) 
     A[1,x] = -1
     A[1,pi] = -γ
-    C[1,x] = -1
-    C[1,ir] = -γ
+    B[1,x] = -1
+    B[1,ir] = -γ
 
     # equation (2): πₜ = β Eₜπₜ₊₁ + κ xₜ
     A[2,pi] = -β
-    C[2,x] = κ
-    C[2,pi] = -1
+    B[2,x] = κ
+    B[2,pi] = -1
 
     # equation (3): iₜ = θ₁ xₜ + θ₂ πₜ + ϵ
-    C[3,x] = θ1
-    C[3,pi] = θ2
-    C[3,ir] = -1
-    D[3,e] = 1
+    B[3,x] = θ1
+    B[3,pi] = θ2
+    B[3,ir] = -1
+    C[3,e] = 1
 
     # covariance matrix
     Σ = [σ]
 
-    m = model(A,B,C,D,Σ,nn) # define model object
+    m = model(A,B,C,Σ,nn) # define model object
     sol = solution(m) # solve model
-    SS = ss(m, sol) # calculate steady state
+    #SS = ss(m, sol) # calculate steady state
     Cov, Cor = covariance(m, sol) # covariance and correlation matrices
 
     # plot options
