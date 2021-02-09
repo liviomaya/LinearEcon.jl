@@ -8,7 +8,6 @@ function solvemodel(m0::model)
         m̄ = count(.!Istable)
 
         # Check eigenvalues
-        #println("$n̄ stable eigenvalues to $n state variables.")
         if m̄ < m
                 error("More forward looking variables than
                 unstable eigenvalues: infinite solutions.")
@@ -23,7 +22,6 @@ function solvemodel(m0::model)
         if det(Z11) == 0
                 error("Rank condition not verified. Z₁₁ is singular.")
         end
-        #println("Rank condition verified.")
 
         Z12 = Z[1:n,n+1:end]
         Z21 = Z[n+1:end,1:n]

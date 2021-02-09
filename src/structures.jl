@@ -11,5 +11,7 @@ end
 struct solution
     P::Array{Float64,2}
     Q::Array{Float64,2}
+    flag_rank::Bool
+    flag_complex::Bool
 end
-# sol = solution(P,Q)
+# sol = solution(P, Q, flag_rank, flag_complex)
