@@ -8,20 +8,19 @@ function solvemodel(m0::model)
         m̄ = count(.!Istable)
 
         # Check eigenvalues
-        if m̄ < m
-                error("More forward looking variables than
-                unstable eigenvalues: infinite solutions.")
-        elseif m̄ > m
-                error("More unstable eigenvalues than
-                forward looking variables: no solution.")
+        if (m̄ < m) || (m̄ > m)
+                sol = solution([NaN],[NaN],false,false)
+                return sol
         end
 
         T, S, Q, Z, t, s = ordschur(F, Istable)
 
         Z11 = Z[1:n,1:n]
         if det(Z11) == 0
-                error("Rank condition not verified. Z₁₁ is singular.")
+                sol = solution([NaN],[NaN],false,false)
+                return sol
         end
+        flag_rank = true
 
         Z12 = Z[1:n,n+1:end]
         Z21 = Z[n+1:end,1:n]
@@ -53,9 +52,8 @@ function solvemodel(m0::model)
         flag_complex = false
         P, flag_complex = convert_real(P, flag_complex)
         Q, flag_complex = convert_real(Q, flag_complex)
-        flag_complex && println("Imaginary component found in the solution.")
 
-        sol = solution(P,Q)
+        sol = solution(P,Q,flag_rank,flag_complex)
         return sol
 end
 
@@ -72,6 +70,6 @@ function solution(m0::model)
 
         P,Q = map(x -> round.(x, digits=10), [P,Q])
         P,Q = map(x -> fix_type(x), [P,Q])
-        sol = solution(P,Q)
+        sol = solution(P, Q, sol1.flag_rank, sol1.flag_complex)
         return sol
 end
