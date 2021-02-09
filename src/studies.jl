@@ -39,7 +39,7 @@ end
 Compute the covariance and correlation matrices `V` and `R`, respectivelly, of the model `m` with solution `sol`.
 """
 function covariance(m::model, sol::solution)
-    (sol.flag_rank = false) && error("Rank condition not verified")
+    !sol.flag_rank && error("Rank condition not verified")
 
     Σ = m.Σ
     P, Q = sol.P, sol.Q
@@ -96,7 +96,7 @@ Compute a path for the model `m` with solution `sol`. Returns an `n`+`m` × `T` 
 `saveName`: if passed, save figure under the name `saveName`.
 """
 function path(m0::model, sol::solution; T::Int64=25, ϵ=randn(m0.q,T), x0=standardinitialx0(m0), displayFigure = true, varIndex = 1:(m0.n+m0.m), labels=nothing, title=nothing, saveName=nothing)
-    (sol.flag_rank = false) && error("Rank condition not verified")
+    !sol.flag_rank && error("Rank condition not verified")
 
     n, m, q = m0.n, m0.m, m0.q
     P, Q = sol.P, sol.Q
