@@ -9,7 +9,7 @@ function solvemodel(m0::model)
 
         # Check eigenvalues
         if (m̄ < m) || (m̄ > m)
-                sol = solution([NaN],[NaN],false,false)
+                sol = solution(zeros(n+m,n),zeros(n+m,q),false,false)
                 return sol
         end
 
@@ -17,7 +17,7 @@ function solvemodel(m0::model)
 
         Z11 = Z[1:n,1:n]
         if det(Z11) == 0
-                sol = solution([NaN],[NaN],false,false)
+                sol = solution(zeros(n+m,n),zeros(n+m,q),false,false)
                 return sol
         end
         flag_rank = true
