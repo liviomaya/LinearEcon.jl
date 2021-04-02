@@ -46,23 +46,25 @@ function covariance(m::model, sol::solution)
     if m.n == 0
         cov = Q * Σ * Q'
     else
-        itermax = 1000
+        itermax = 10000
         damp = 0.50
+        converged = false
         cov = zeros(m.n + m.m, m.n + m.m)
         if m.m > 0
             P̄ = [P zeros(m.m+m.n,m.m)]
         else
             P̄ = P
         end
-        iter = 1
-        while iter <= itermax
+        for i in 1:itermax
             covUpd = P̄ * cov * P̄' + Q * Σ * Q'
             dist = maximum(abs.(covUpd - cov))
-            (log10(dist) < -7) && break
-            iter += 1
+            (log10(dist) < -10) && (converged = true)
+            converged && break
             cov = damp * covUpd + (1-damp) * cov
-        end      
+        end
+        !converged && println("Covariance matrix: failed convergence.")
     end
+    cov = round.(cov, digits=10)
     stdev = sqrt.(diag(cov))
     stdev_mat = diagm(0 => sqrt.(diag(cov)))
     inv_stdev_mat = inv(stdev_mat)
