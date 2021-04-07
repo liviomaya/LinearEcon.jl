@@ -3,7 +3,7 @@
 
 Compute the steady state for the model `m` with solution `sol`.
 """
-function ss(m::model, sol::solution)
+function ss(m::Model, sol::Solution)
     if m.n == 0
         SS = sol.c
     else
@@ -38,7 +38,7 @@ end
 
 Compute the covariance and correlation matrices `V` and `R`, respectivelly, of the model `m` with solution `sol`.
 """
-function covariance(m::model, sol::solution)
+function covariance(m::Model, sol::Solution)
     !sol.flag_rank && error("Rank condition not verified")
 
     Σ = m.Σ
@@ -97,7 +97,7 @@ Compute a path for the model `m` with solution `sol`. Returns an `n`+`m` × `T` 
 
 `saveName`: if passed, save figure under the name `saveName`.
 """
-function path(m0::model, sol::solution; T::Int64=25, ϵ=randn(m0.q,T), x0=standardinitialx0(m0), displayFigure = true, varIndex = 1:(m0.n+m0.m), labels=nothing, title=nothing, saveName=nothing)
+function path(m0::Model, sol::Solution; T::Int64=25, ϵ=randn(m0.q,T), x0=standardinitialx0(m0), displayFigure = true, varIndex = 1:(m0.n+m0.m), labels=nothing, title=nothing, saveName=nothing)
     !sol.flag_rank && error("Rank condition not verified")
 
     n, m, q = m0.n, m0.m, m0.q
@@ -146,7 +146,7 @@ function path(m0::model, sol::solution; T::Int64=25, ϵ=randn(m0.q,T), x0=standa
     return Path
 end
 
-function movavg(m::model, sol::solution; T::Int64 = 25)
+function movavg(m::Model, sol::Solution; T::Int64 = 25)
 
     nn = m.n
     nm = m.m
@@ -191,7 +191,7 @@ Compute the impulse response functions for model `m` with solution `sol` to a on
 `saveName`: if passed, save figure under the name `saveName`.
 
 """
-function irf(m0::model, sol::solution, i::Int64; T::Int64=25, displayFigure = true, varIndex = 1:(m0.n+m0.m), labels=nothing, title = nothing, saveName = nothing)
+function irf(m0::Model, sol::Solution, i::Int64; T::Int64=25, displayFigure = true, varIndex = 1:(m0.n+m0.m), labels=nothing, title = nothing, saveName = nothing)
     n, m, q = m0.n, m0.m, m0.q
     Irf = zeros(n+m, T)
     ϵ = zeros(q,T)
@@ -208,7 +208,7 @@ end
 Compute the impulse response functions for model `m` with solution `sol` to every innovation in the model. Returns an `n`+`m` × `T` × `q` array `X`. All variables represented as deviations from their steady state values. No `saveName` option.
 
 """
-function irf(m0::model, sol::solution; T::Int64=25, displayFigure = true, varIndex = 1:(m0.n+m0.m), labels=nothing)
+function irf(m0::Model, sol::Solution; T::Int64=25, displayFigure = true, varIndex = 1:(m0.n+m0.m), labels=nothing)
     n, m, q = m0.n, m0.m, m0.q
     Irf = zeros(n+m, T, q)
     for iq in 1:q
@@ -230,7 +230,7 @@ Compute the variance decomposition of `T` period ahead forecast errors for model
 `T`: forecast error horizon. (default = 1)
 
 """
-function vardecomp(m0::model, sol::solution; T = 1)
+function vardecomp(m0::Model, sol::Solution; T = 1)
     MA = movavg(m0, sol, T = T)
     nn, nm, nq = m0.n, m0.m, m0.q 
     neq = nn + nm

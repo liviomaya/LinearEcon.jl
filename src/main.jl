@@ -1,4 +1,4 @@
-function solvemodel(m0::model)
+function solvemodel(m0::Model)
         A, B, C, Σ = m0.A, m0.B, m0.C, m0.Σ
         n, m, q = m0.n, m0.m, m0.q
         
@@ -53,11 +53,11 @@ function solvemodel(m0::model)
         P, flag_complex = convert_real(P, flag_complex)
         Q, flag_complex = convert_real(Q, flag_complex)
 
-        sol = solution(P,Q,flag_rank,flag_complex)
+        sol = Solution(P,Q,flag_rank,flag_complex)
         return sol
 end
 
-function solution(m0::model)
+function solution(m0::Model)
         m1, Iaux = addauxiliaries(m0)
         sol1 = solvemodel(m1)
         # Remove auxiliaries
@@ -70,6 +70,6 @@ function solution(m0::model)
 
         P,Q = map(x -> round.(x, digits=10), [P,Q])
         P,Q = map(x -> fix_type(x), [P,Q])
-        sol = solution(P, Q, sol1.flag_rank, sol1.flag_complex)
+        sol = Solution(P, Q, sol1.flag_rank, sol1.flag_complex)
         return sol
 end

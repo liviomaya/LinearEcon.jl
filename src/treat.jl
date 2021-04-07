@@ -17,12 +17,12 @@ function model(A,B,C,Σ,n)
     m = size(A,1) - n
     q = size(Σ,1)
     A,B,C,Σ = map(fix_type, (A,B,C,Σ))
-    m = model(A,B,C,Σ,n,m,q)
+    m = Model(A,B,C,Σ,n,m,q)
     return m
 end
 # m = model(A,B,C,Σ,n)
 
-function addauxiliaries(m0::model)
+function addauxiliaries(m0::Model)
         n, m, q = m0.n, m0.m, m0.q
         neq = n + m
         A, B, C, Σ = m0.A, m0.B, m0.C, m0.Σ
@@ -47,6 +47,6 @@ function addauxiliaries(m0::model)
             m += 1
             neq += 1
         end
-        m1 = model(A,B,C,Σ,n)
+        m1 = Model(A,B,C,Σ,n)
         return m1, Iaux
 end
