@@ -47,6 +47,6 @@ function addauxiliaries(m0::Model)
             m += 1
             neq += 1
         end
-        m1 = Model(A,B,C,Σ,n)
+        m1 = model(A,B,C,Σ,n)
         return m1, Iaux
 end

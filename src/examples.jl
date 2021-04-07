@@ -267,6 +267,8 @@ three_eq_nk()
 
 function nk_fisc_dominance()
 
+    # Not working!!
+
     #=  NEW KEYNESIAN MODEL UNDER FISCAL DOMINANCE
         (1) ρ vₜ = vₜ₋₁ + iₜ - πₜ - sₜ
         (2) xₜ = Eₜxₜ₊₁ - σ (iₜ - Eₜπₜ₊₁)
