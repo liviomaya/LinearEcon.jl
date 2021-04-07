@@ -175,7 +175,7 @@ end
     X = irf(m, sol, i)
     X = irf(m, sol, i; T, displayFigure, varIndex, labels, saveName)
 
-Compute the impulse response functions for model `m` with solution `sol` to a one sd. dev. shock in exogenous variable i. Returns an `n`+`m`+`p` × `T` array `X`. All variables represented as deviations from their steady state values.
+Compute the impulse response functions for model `m` with solution `sol` to a one sd. dev. shock in exogenous variable i. Returns an `n`+`m` × `T` array `X`. All variables represented as deviations from their steady state values.
 
 # Keyword Arguments
 `T`: number of periods. 25 if not specified.
@@ -205,7 +205,7 @@ end
     X = irf(m, sol)
     X = irf(m, sol; T, displayFigure, varIndex, labels)
 
-Compute the impulse response functions for model `m` with solution `sol` to every innovation in the model. Returns an `n`+`m`+`p` × `T` × `q` array `X`. All variables represented as deviations from their steady state values. No `saveName` option.
+Compute the impulse response functions for model `m` with solution `sol` to every innovation in the model. Returns an `n`+`m` × `T` × `q` array `X`. All variables represented as deviations from their steady state values. No `saveName` option.
 
 """
 function irf(m0::model, sol::solution; T::Int64=25, displayFigure = true, varIndex = 1:(m0.n+m0.m), labels=nothing)
@@ -217,4 +217,35 @@ function irf(m0::model, sol::solution; T::Int64=25, displayFigure = true, varInd
         Irf[:,:,iq] = irf(m0, sol, iq; T=T, displayFigure = displayFigure, varIndex = varIndex, labels=labels, title="Shock #$(iq)")
     end
     return Irf
+end
+
+
+"""
+    X = vardecomp(m, sol)
+    X = vardecomp(m, sol; T)
+
+Compute the variance decomposition of `T` period ahead forecast errors for model `m` with solution `sol`. Returns an `n`+`m` × `q` array `V`. The `i`,`j` element contains the `i`-th variable variance due to shock `j`. If `Σ` is a diagonal matrix and `T` is large, the elements of each row combine to the total variance of the corresponding variable.
+
+# Keyword Argument
+`T`: forecast error horizon. (default = 1)
+
+"""
+function vardecomp(m0::model, sol::solution; T = 1)
+    MA = movavg(m0, sol, T = T)
+    nn, nm, nq = m0.n, m0.m, m0.q 
+    neq = nn + nm
+
+    V = zeros(neq, nq)
+    for j in 1:nq
+        v = zeros(neq)
+        Iq = zeros(nq, nq)
+        Iq[j,j] = m0.Σ[j,j]
+        for t in 1:T
+            C = MA[:,:,t]
+            Term = C*Iq*C' 
+            v .+= diag(Term)
+        end
+        V[:,j] = v
+    end
+    return V
 end

@@ -1,6 +1,6 @@
 module LinearEcon
 
-export model, solution, covariance, path, irf
+export model, solution, covariance, path, irf, vardecomp
 
 using LinearAlgebra
 using Plots
