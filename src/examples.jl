@@ -145,7 +145,7 @@ function frictionless_mon_dominance()
     ν = 0.75
     θ = 1.5
     σ₁ = 0.01
-    σ₂ = 0.03
+    σ₂ = 0.02
 
     # define variable indices
     v,r,pi,ir = 1:4
@@ -184,6 +184,8 @@ function frictionless_mon_dominance()
     m = model(A,B,C,Σ,nn) # define model
     sol = solution(m) # solve model
     #SS = ss(m, sol) # calculate steady state
+    V = vardecomp(m, sol, T = 200) # variance decomposition
+    display( pie(["Mon. Pol Shock", "Real Interest Shock"], V[pi,:], title="Variance Decomposition")  )
 
     varIndex = 2:4 # display real interest, inflation and nominal rate
     labels = ["Real Interest", "Inflation", "Nominal Interest"]
