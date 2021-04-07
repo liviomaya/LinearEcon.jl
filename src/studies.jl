@@ -146,6 +146,30 @@ function path(m0::model, sol::solution; T::Int64=25, ϵ=randn(m0.q,T), x0=standa
     return Path
 end
 
+function movavg(m::model, sol::solution; T::Int64 = 25)
+
+    nn = m.n
+    nm = m.m
+    nq = m.q
+    Ix = 1:nn
+    Iy = nn+1:nn+nm
+    
+    Px = sol.P[Ix,:]
+    Py = sol.P[Iy,:]
+
+    Qx = sol.Q[Ix,:]
+    Qy = sol.Q[Iy,:]
+
+    MA = zeros(nn+nm, nq, T)
+    MA[Ix,:,1] = Qx
+    MA[Iy,:,1] = Qy
+    for t in 2:T
+        MA[Ix,:,t] = (Px^(t-1))*Qx
+        MA[Iy,:,t] = Py*(Px^(t-2))*Qx
+    end
+    return MA
+end
+
 
 """
     X = irf(m, sol, i)
