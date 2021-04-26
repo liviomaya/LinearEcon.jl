@@ -193,7 +193,7 @@ Compute the impulse response functions for model `m` with solution `sol` to a on
 `saveName`: if passed, save figure under the name `saveName`.
 
 """
-function irf(m0::Model, sol::Solution, i::Int64; T::Int64=25, displayFigure = true, varIndex = 1:(m0.n+m0.m), labels=nothing, title = :none, saveName = nothing)
+function irf(m0::Model, sol::Solution, i::Int64; T::Int64=25, displayFigure = true, varIndex = 1:(m0.n+m0.m), labels=nothing, title = nothing, saveName = nothing)
     n, m, q = m0.n, m0.m, m0.q
     Irf = zeros(n+m, T)
     ϵ = zeros(q,T)
