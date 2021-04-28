@@ -34,18 +34,17 @@ function ss(m::Model, sol::Solution)
 end
 
 """
-    V, R = covariance(m, sol)
+    V = covariance(m, sol)
+    V = covariance(m, sol; itermax, tol)
 
-Compute the covariance and correlation matrices `V` and `R`, respectivelly, of the model `m` with solution `sol`.
+Compute the covariance matrix `V` of the model `m` with solution `sol`.
 
 # Keyword Arguments
 `itermax`: maximum number of iterations. Default = 10000.
 
-`guess`: `n+m` × `n+m` matrix to be initial guess for the fixed point.
-
 `tol`: positive scalar, tolerated approximation error. Default = 1e-10.
 """
-function covariance(m::Model, sol::Solution; itermax = 10000, guess = zeros(m.n + m.m, m.n + m.m), tol=1e-10)
+function covariance(m::Model, sol::Solution; itermax = 10000, tol=1e-10)
     !sol.flag_rank && error("Rank condition not verified")
 
     Σ = m.Σ
@@ -55,7 +54,7 @@ function covariance(m::Model, sol::Solution; itermax = 10000, guess = zeros(m.n 
     else
         damp = 1.0
         converged = false
-        cov = guess
+        cov = zeros(m.n+m.m, m.n+m.m)
         if m.m > 0
             P̄ = [P zeros(m.m+m.n,m.m)]
         else
@@ -71,13 +70,34 @@ function covariance(m::Model, sol::Solution; itermax = 10000, guess = zeros(m.n 
         !converged && println("Covariance matrix: failed convergence.")
     end
     cov = round.(cov, digits=10)
-    stdev = sqrt.(diag(cov))
-    stdev_mat = diagm(0 => sqrt.(diag(cov)))
+    cov = (cov .+ cov') / 2 
+    # stdev = sqrt.(diag(cov))
+    # stdev_mat = diagm(0 => sqrt.(diag(cov)))
+    # inv_stdev_mat = inv(stdev_mat)
+    # inv_stdev_mat[stdev_mat .== 0] .= 0.0
+    # cor = inv_stdev_mat * cov * inv_stdev_mat
+
+    return cov #, cor
+end
+
+"""
+    R = correlation(m, sol)
+
+Compute the correlation matrix `R` of the model `m` with solution `sol`.
+
+# Keyword Arguments
+`itermax`: maximum number of iterations. Default = 10000.
+
+`tol`: positive scalar, tolerated approximation error. Default = 1e-10.
+"""
+function correlation(m::Model, sol::Solution; itermax = 10000, tol=1e-10)
+    V = covariance(m, sol, itermax=itermax, tol=tol)
+    stdev = sqrt.(diag(V))
+    stdev_mat = diagm( 0 => stdev )
     inv_stdev_mat = inv(stdev_mat)
     inv_stdev_mat[stdev_mat .== 0] .= 0.0
-    cor = inv_stdev_mat * cov * inv_stdev_mat
-
-    return cov, cor
+    R = inv_stdev_mat * V * inv_stdev_mat
+    return R
 end
 
 """
