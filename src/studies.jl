@@ -37,8 +37,13 @@ end
     V, R = covariance(m, sol)
 
 Compute the covariance and correlation matrices `V` and `R`, respectivelly, of the model `m` with solution `sol`.
+
+# Keyword Arguments
+`itermax`: maximum number of iterations. Default = 10000.
+
+`guess`: `n+m` × `n+m` matrix to be initial guess for the fixed point.
 """
-function covariance(m::Model, sol::Solution)
+function covariance(m::Model, sol::Solution; itermax = 10000, guess = zeros(m.n + m.m, m.n + m.m))
     !sol.flag_rank && error("Rank condition not verified")
 
     Σ = m.Σ
@@ -46,10 +51,9 @@ function covariance(m::Model, sol::Solution)
     if m.n == 0
         cov = Q * Σ * Q'
     else
-        itermax = 10000
-        damp = 0.50
+        damp = 1.0
         converged = false
-        cov = zeros(m.n + m.m, m.n + m.m)
+        cov = guess
         if m.m > 0
             P̄ = [P zeros(m.m+m.n,m.m)]
         else
