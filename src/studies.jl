@@ -42,8 +42,10 @@ Compute the covariance and correlation matrices `V` and `R`, respectivelly, of t
 `itermax`: maximum number of iterations. Default = 10000.
 
 `guess`: `n+m` × `n+m` matrix to be initial guess for the fixed point.
+
+`tol`: positive scalar, tolerated approximation error. Default = 1e-10.
 """
-function covariance(m::Model, sol::Solution; itermax = 10000, guess = zeros(m.n + m.m, m.n + m.m))
+function covariance(m::Model, sol::Solution; itermax = 10000, guess = zeros(m.n + m.m, m.n + m.m), tol=1e-10)
     !sol.flag_rank && error("Rank condition not verified")
 
     Σ = m.Σ
@@ -62,7 +64,7 @@ function covariance(m::Model, sol::Solution; itermax = 10000, guess = zeros(m.n 
         for i in 1:itermax
             covUpd = P̄ * cov * P̄' + Q * Σ * Q'
             dist = maximum(abs.(covUpd - cov))
-            (log10(dist) < -10) && (converged = true)
+            (dist < tol) && (converged = true)
             converged && break
             cov = damp * covUpd + (1-damp) * cov
         end
