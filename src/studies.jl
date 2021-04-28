@@ -34,10 +34,10 @@ function ss(m::Model, sol::Solution)
 end
 
 """
-    V = covariance(m, sol)
-    V = covariance(m, sol; itermax, tol)
+    V, flag_conv = covariance(m, sol)
+    V, flag_conv = covariance(m, sol; itermax, tol)
 
-Compute the covariance matrix `V` of the model `m` with solution `sol`.
+Compute the covariance matrix `V` of the model `m` with solution `sol`. Output `flag_conv` indicates if convergence of Lyapunov operator was achieved.
 
 # Keyword Arguments
 `itermax`: maximum number of iterations. Default = 10000.
@@ -50,40 +50,36 @@ function covariance(m::Model, sol::Solution; itermax = 10000, tol=1e-10)
     Σ = m.Σ
     P, Q = sol.P, sol.Q
     if m.n == 0
-        cov = Q * Σ * Q'
+        V = Q * Σ * Q'
+        flag_converge = true
     else
         damp = 1.0
-        converged = false
-        cov = zeros(m.n+m.m, m.n+m.m)
+        flag_converge = false
+        V = zeros(m.n+m.m, m.n+m.m)
         if m.m > 0
             P̄ = [P zeros(m.m+m.n,m.m)]
         else
             P̄ = P
         end
         for i in 1:itermax
-            covUpd = P̄ * cov * P̄' + Q * Σ * Q'
-            dist = maximum(abs.(covUpd - cov))
-            (dist < tol) && (converged = true)
-            converged && break
-            cov = damp * covUpd + (1-damp) * cov
+            VUpd = P̄ * V * P̄' + Q * Σ * Q'
+            dist = maximum(abs.(VUpd - V))
+            (dist < tol) && (flag_converge = true)
+            flag_converge && break
+            V = damp * VUpd + (1-damp) * V
         end
-        !converged && println("Covariance matrix: failed convergence.")
     end
-    cov = round.(cov, digits=10)
-    cov = (cov .+ cov') / 2 
-    # stdev = sqrt.(diag(cov))
-    # stdev_mat = diagm(0 => sqrt.(diag(cov)))
-    # inv_stdev_mat = inv(stdev_mat)
-    # inv_stdev_mat[stdev_mat .== 0] .= 0.0
-    # cor = inv_stdev_mat * cov * inv_stdev_mat
+    V = round.(V, digits=10)
+    V = (V .+ V') / 2 
 
-    return cov #, cor
+    return V, flag_converge
 end
 
 """
-    R = correlation(m, sol)
+    R, flag_conv = correlation(m, sol)
+    R, flag_conv = correlation(m, sol; itermax, tol)
 
-Compute the correlation matrix `R` of the model `m` with solution `sol`.
+Compute the correlation matrix `R` of the model `m` with solution `sol`. Output `flag_conv` indicates if convergence of Lyapunov operator was achieved.
 
 # Keyword Arguments
 `itermax`: maximum number of iterations. Default = 10000.
@@ -91,13 +87,13 @@ Compute the correlation matrix `R` of the model `m` with solution `sol`.
 `tol`: positive scalar, tolerated approximation error. Default = 1e-10.
 """
 function correlation(m::Model, sol::Solution; itermax = 10000, tol=1e-10)
-    V = covariance(m, sol, itermax=itermax, tol=tol)
+    V, flag_conv = covariance(m, sol, itermax=itermax, tol=tol)
     stdev = sqrt.(diag(V))
     stdev_mat = diagm( 0 => stdev )
     inv_stdev_mat = inv(stdev_mat)
     inv_stdev_mat[stdev_mat .== 0] .= 0.0
     R = inv_stdev_mat * V * inv_stdev_mat
-    return R
+    return R, flag_conv
 end
 
 """
