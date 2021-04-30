@@ -98,7 +98,7 @@ end
 
 """
     X = path(m, sol)
-    X = path(m, sol; T, ϵ, x0, displayFigure, varIndex, labels, title)
+    X = path(m, sol; T, ϵ, x0, displayFigure, varIndex, labels, title, saveName)
 
 Compute a path for the model `m` with solution `sol`. Returns an `n`+`m` × `T` array `X`.
 
