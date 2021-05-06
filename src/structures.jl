@@ -11,6 +11,7 @@ struct VARModel
 end
 
 VARModel(P,Q,Σ) = VARModel(P, Q, Σ, size(P,1), size(Σ,1))
+EmptyVARModel() = VARModel(zeros(0,0), zeros(0,0), zeros(0,0))
 
 # Linear Rational Expectations Model
 # A (xₜ ; Eₜ yₜ₊₁) = B (xₜ₋₁ ; yₜ) + C ϵₜ
