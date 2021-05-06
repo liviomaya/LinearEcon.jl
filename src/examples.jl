@@ -41,16 +41,19 @@ function price_stock()
     # covariance matrix
     Σ = [σ]
 
-    m = model(A,B,C,Σ,nn) # define model object
-    sol = solution(m) # solve model
-    Cov, Cor = covariance(m, sol) # covariance and correlation matrices
+    m = Model(A,B,C,Σ,nn) # define model object
+    R, FlagConverged = Correlation(m.S)
+    display(FlagConverged)
+    display(R)
 
     # plot options
     T = 12 # periods in the irf
-    labels = ["Dividend", "Stock Price"]
+    Labels = ["Dividend", "Stock Price"]
 
     # response to surplus shock
-    irf(m, sol, 1, T=T, labels=labels, title="Dividend shock")
+    Fig = IRF(m.S, 1, T=T, Labels=Labels)
+    plot!(Fig, title="Dividend Shock")
+    display(Fig)
     nothing
 end
 price_stock()
@@ -109,17 +112,19 @@ function old_keynesian()
     # covariance matrix
     Σ = [σ]
 
-    m = model(A,B,C,Σ,nn) # define model object
-    sol = solution(m) # solve model
-    #SS = ss(m, sol) # calculate steady state
-    Cov, Cor = covariance(m, sol) # covariance and correlation matrices
+    m = Model(A,B,C,Σ,nn) # define model object
+    R, FlagConverged = Correlation(m.S)
+    display(FlagConverged)
+    display(R)
 
     # plot options
     T = 12 # periods in the irf
-    labels = ["Output Gap", "Inflation", "Interest Rate"]
+    Labels = ["Output Gap", "Inflation", "Interest Rate"]
 
     # response to surplus shock
-    irf(m, sol, 1, T=T, labels=labels, title="Monetary policy shock")
+    Fig = IRF(m.S, 1, T=T, Labels=Labels)
+    plot!(Fig, title="Monetary Policy Shock")
+    display(Fig)
     nothing
 end
 old_keynesian()
@@ -181,17 +186,21 @@ function frictionless_mon_dominance()
     Σ[e1,e1] = σ₁
     Σ[e2,e2] = σ₂
 
-    m = model(A,B,C,Σ,nn) # define model
-    sol = solution(m) # solve model
-    #SS = ss(m, sol) # calculate steady state
-    V = vardecomp(m, sol, T = 200) # variance decomposition
+    m = Model(A,B,C,Σ,nn) # define model
+    V = VarDecomp(m.S, 500) # variance decomposition
     display( pie(["Mon. Pol Shock", "Real Interest Shock"], V[pi,:], title="Variance Decomposition")  )
 
-    varIndex = 2:4 # display real interest, inflation and nominal rate
-    labels = ["Real Interest", "Inflation", "Nominal Interest"]
+    Vars = 2:4 # display real interest, inflation and nominal rate
+    Labels = ["Real Interest", "Inflation", "Nominal Interest"]
 
-    irf(m, sol, varIndex=varIndex, labels=labels)
-    path(m, sol, varIndex=varIndex, labels=labels, title="Simulation")
+    Fig = IRF(m.S, 2, Vars=Vars, Labels=Labels)
+    plot!(Fig, title="Natural Rate Shock")
+    display(Fig)
+
+    Fig = Simulation(m.S, Vars=Vars, Labels=Labels)
+    plot!(Fig, title="Simulation")
+    display(Fig)
+    
     nothing
 end
 frictionless_mon_dominance()
@@ -250,107 +259,16 @@ function three_eq_nk()
     # covariance matrix
     Σ = [σ]
 
-    m = model(A,B,C,Σ,nn) # define model object
-    sol = solution(m) # solve model
-    #SS = ss(m, sol) # calculate steady state
-    Cov, Cor = covariance(m, sol) # covariance and correlation matrices
+    m = Model(A,B,C,Σ,nn) # define model object
 
     # plot options
     T = 12 # periods in the irf
-    labels = ["Output Gap", "Inflation", "Interest Rate"]
+    Labels = ["Output Gap", "Inflation", "Interest Rate"]
 
     # response to surplus shock
-    irf(m, sol, 1, T=T, labels=labels, title="Monetary policy shock")
+    Fig = IRF(m.S, 1, T=T, Labels=Labels)
+    plot!(Fig, title="Monetary policy shock")
+    display(Fig)
     nothing
 end
 three_eq_nk()
-
-function nk_fisc_dominance()
-
-    # Not working!!
-
-    #=  NEW KEYNESIAN MODEL UNDER FISCAL DOMINANCE
-        (1) ρ vₜ = vₜ₋₁ + iₜ - πₜ - sₜ
-        (2) xₜ = Eₜxₜ₊₁ - σ (iₜ - Eₜπₜ₊₁)
-        (3) πₜ = β Eₜπₜ₊₁ + κ xₜ
-        (4) sₜ = τ xₜ + ϵₜ
-
-        iₜ is a determistic process: agents anticipate interest path
-    =#
-
-    neq = 4 # number of equations/variables
-    nn = 1 # number of state variables
-    nm = 2 # number of forward looking variables
-    np = 1 # number of static variables
-    nq = 1 # number of exogenous variables
-    nr = 1 # number of deterministic processes
-
-    # parameters
-    ρ = 0.98
-    σ = 1.0
-    β = 0.98
-    κ = 0.5
-    τ = 0.2
-    σϵ = 1
-
-    # define variable indices
-    v, x, pi, s = 1:4
-    e = 1
-    ir = 1
-
-    # define matrices
-    A = zeros(neq,nn+nm)
-    B = zeros(neq)
-    C = zeros(neq,neq)
-    D = zeros(neq,nq)
-    Σ = zeros(nq,nq)
-    F = zeros(neq,nr)
-
-    # equation (1): ρ vₜ = vₜ₋₁ + iₜ - πₜ - sₜ
-    A[1,v] = ρ
-    C[1,v] = 1
-    C[1,pi] = -1
-    C[1,s] = -1
-    F[1,ir] = 1
-
-    # equation (2): xₜ = Eₜxₜ₊₁ - σ (iₜ - Eₜπₜ₊₁)
-    A[2,x] = -1
-    A[2,pi] = -σ
-    C[2,x] = -1
-    F[2,ir] = -σ
-
-    # equation (3): πₜ = β Eₜπₜ₊₁ + κ xₜ
-    A[3,pi] = -β
-    C[3,pi] = -1
-    C[3,x] = κ
-
-    # equation (4): sₜ = τ xₜ + ϵₜ
-    C[4,x] = τ
-    C[4,s] = -1
-    D[4,e] = 1
-
-    # covariance matrix
-    Σ = [σϵ]
-
-    m = model(A,B,C,D,F,Σ,nn) # define model object
-    sol = solution(m) # solve model
-    SS = ss(m, sol) # calculate steady state
-    Cov, Cor = covariance(m, sol) # covariance and correlation matrices
-
-    # plot options
-    varIndex = 1:4
-    labels = ["Debt", "Output Gap", "Inflation", "Surplus"]
-    T = 12 # periods in the irf
-
-    # response to surplus shock
-    irf(m, sol, 1, T=T, varIndex=varIndex, labels=labels, title="Surplus shock")
-
-    # permanent increase in interest rates in period t > 1
-    t = 1
-    dp = zeros(nr,t)
-    ϵ = zeros(nq,T)
-    dp[ir,t] = 1
-    path(m, sol, ϵ=ϵ, dp=dp, T=T, varIndex=varIndex, labels=labels, title = "Permanent increase in interest rate")
-    nothing
-end
-nk_fisc_dominance()

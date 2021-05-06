@@ -48,7 +48,7 @@ function SolveModel(A, B, C, Σ, n, m)
                 Q = Z * inv(S) * Ct
         elseif nostate
                 M = -inv(T) * Ct
-                P = zeros(0,0)
+                P = zeros(m,m)
                 Q = Z * M
         else
                 Z11 = Z[1:n,1:n]
