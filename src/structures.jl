@@ -24,7 +24,7 @@ struct Model
     n::Int64 # number of states
     m::Int64 # number of forward-looking or static variables
     q::Int64 # number of shocks
-    λ::Array{Float64,1} # system eigenvalues
+    λ::Array{Complex{Float64},1} # system eigenvalues
     S::VARModel # solution in VAR form
     flag_rank::Bool
     flag_complex::Bool
