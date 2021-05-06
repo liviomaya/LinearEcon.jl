@@ -19,23 +19,22 @@ end
 ConvertReal(x) = ConvertReal(x, true)[1]
 
 
-function SolutionFailedRank(λ)
+function SolutionFailedRank()
         S = EmptyVARModel()
         flag_rank = false
         flag_complex = false
-        λ, flag_complex = ConvertReal(λ, flag_complex)
-        return λ, S, flag_rank, flag_complex
+        return S, flag_rank, flag_complex
 end
 
 function SolveModel(A, B, C, Σ, n, m)
         
         F = schur(B, A)
-        λ = F.α ./ F.β
-        Istable = abs.(λ) .< 1
+        # λ = F.α ./ F.β eigenvalues
+        Istable = abs.(F.α) .< abs.(F.β)
         n̄ = count(Istable)
         m̄ = count(.!Istable)
-        (m̄ < m) && return SolutionFailedRank(λ) # infinite solutions
-        (m̄ > m) && return SolutionFailedRank(λ) # no stationary solution
+        (m̄ < m) && return SolutionFailedRank() # infinite solutions
+        (m̄ > m) && return SolutionFailedRank() # no stationary solution
 
         noforward = (m == 0)
         nostate = (n == 0)
@@ -44,7 +43,7 @@ function SolveModel(A, B, C, Σ, n, m)
         Ct = Q' * C
 
         if noforward
-                (det(Z) == 0) && return SolutionFailedRank(λ)
+                (det(Z) == 0) && return SolutionFailedRank()
                 P = Z * inv(S) * T * inv(Z)
                 Q = Z * inv(S) * Ct
         elseif nostate
@@ -53,7 +52,7 @@ function SolveModel(A, B, C, Σ, n, m)
                 Q = Z * M
         else
                 Z11 = Z[1:n,1:n]
-                (det(Z11) == 0) && return SolutionFailedRank(λ)
+                (det(Z11) == 0) && return SolutionFailedRank()
 
                 Z12 = Z[1:n,n+1:end]
                 Z21 = Z[n+1:end,1:n]
@@ -83,20 +82,20 @@ function SolveModel(A, B, C, Σ, n, m)
 
         flag_rank = true
 
-        P, Q = map(x -> round.(x, digits=10), [P, Q])
-        S = VARModel(P, Q, Σ)
-
         flag_complex = false
         P, flag_complex = ConvertReal(P, flag_complex)
         Q, flag_complex = ConvertReal(Q, flag_complex)
 
-        return λ, S, flag_rank, flag_complex
+        P, Q = map(x -> round.(x, digits=10), [P, Q])
+        S = VARModel(P, Q, Σ)
+
+        return S, flag_rank, flag_complex
 end
 
-function model(A, B, C, Σ, n)
+function Model(A, B, C, Σ, n)
         m = size(A,1) - n
         q = size(Σ,1)
         A, B, C, Σ = map(ConvertArray2, (A, B, C, Σ))
-        λ, S, flag_rank, flag_complex = SolveModel(A, B, C, Σ, n, m)
-        m = Model(A, B, C, Σ, n, m, q, λ, S, flag_rank, flag_complex)
+        S, flag_rank, flag_complex = SolveModel(A, B, C, Σ, n, m)
+        m = Model(A, B, C, Σ, n, m, q, S, flag_rank, flag_complex)
 end
