@@ -1,12 +1,13 @@
 module LinearEcon
 
-export Model, VARModel, model #, solution, covariance, correlation, path, irf, vardecomp
+export Model, VARModel, MovingAverage, VarDecomp, IRF, Simulation, Covariance, Correlation, CholDecomp
 
 using LinearAlgebra
+using Distributions
 using Plots
 gr()
 include("structures.jl")
 include("modelsolution.jl")
-#include("studies.jl")
+include("timeseries.jl")
 
 end 
