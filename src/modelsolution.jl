@@ -1,3 +1,24 @@
+function ConvertArray2(x)
+        if typeof(x) in (Int64,Float64)
+            return reshape([Float64(x)],1,1)
+        elseif typeof(x) in (Array{Int64,1},Array{Float64,1})
+            n = length(x)
+            return reshape(Float64.(x),n,1)
+        elseif typeof(x) in (Array{Int64,2},Array{Float64,2})
+            return Float64.(x)
+        else
+            error("Type error.")
+        end
+end
+
+function ConvertReal(x, flag)
+        flag = flag || maximum(abs.(imag.(x))) .> 1e-5
+        x = real.(x)
+        return x, flag
+end
+ConvertReal(x) = ConvertReal(x, true)[1]
+
+
 function SolutionFailedRank(λ)
         S = EmptyVARModel()
         flag_rank = false
@@ -66,8 +87,8 @@ function SolveModel(A, B, C, Σ, n, m)
         S = VARModel(P, Q, Σ)
 
         flag_complex = false
-        P, flag_complex = convert_real(P, flag_complex)
-        Q, flag_complex = convert_real(Q, flag_complex)
+        P, flag_complex = ConvertReal(P, flag_complex)
+        Q, flag_complex = ConvertReal(Q, flag_complex)
 
         return λ, S, flag_rank, flag_complex
 end
@@ -75,7 +96,7 @@ end
 function model(A, B, C, Σ, n)
         m = size(A,1) - n
         q = size(Σ,1)
-        A, B, C, Σ = map(FixType, (A, B, C, Σ))
+        A, B, C, Σ = map(ConvertArray2, (A, B, C, Σ))
         λ, S, flag_rank, flag_complex = SolveModel(A, B, C, Σ, n, m)
         m = Model(A, B, C, Σ, n, m, q, λ, S, flag_rank, flag_complex)
 end
