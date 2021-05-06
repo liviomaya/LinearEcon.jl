@@ -1,5 +1,5 @@
 # convert array into Array{Float64,2}
-function fix_type(x)
+function FixType(x)
     if typeof(x) in (Int64,Float64)
         return reshape([Float64(x)],1,1)
     elseif typeof(x) in (Array{Int64,1},Array{Float64,1})
@@ -13,7 +13,7 @@ function fix_type(x)
 end
 
 # build model structure
-function model(A,B,C,Σ,n)
+function DEPmodel(A,B,C,Σ,n)
     m = size(A,1) - n
     q = size(Σ,1)
     A,B,C,Σ = map(fix_type, (A,B,C,Σ))

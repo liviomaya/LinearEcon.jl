@@ -1,9 +1,9 @@
-function convert_real(x, flag)
+function ConvertReal(x, flag)
     flag = flag || maximum(abs.(imag.(x))) .> 1e-5
     x = real.(x)
     return x, flag
 end
-convert_real(x) = convert_real(x, true)[1]
+ConvertReal(x) = ConvertReal(x, true)[1]
 
 function standardinitialx0(m)
     if m.n == 0
