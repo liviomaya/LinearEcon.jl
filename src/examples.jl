@@ -5,8 +5,7 @@ function price_stock()
         (1) dₜ = ρ dₜ₋₁ + ϵₜ
         (2) sₜ = dₜ + β Eₜsₜ₊₁
 
-        st.dev(ϵ) = σ
-    =#
+        st.dev(ϵ) = σ =#
 
     neq = 2 # number of equations/variables
     nn = 1 # number of state variables
@@ -23,10 +22,10 @@ function price_stock()
     e = 1
 
     # define matrices
-    A = zeros(neq,neq)
-    B = zeros(neq,neq)
-    C = zeros(neq,nq)
-    Σ = zeros(nq,nq)
+    A = zeros(neq, neq)
+    B = zeros(neq, neq)
+    C = zeros(neq, nq)
+    Σ = zeros(nq, nq)
 
     # equation (1): dₜ = ρ dₜ₋₁ + ϵₜ 
     A[1,d] = 1
@@ -41,7 +40,7 @@ function price_stock()
     # covariance matrix
     Σ = [σ]
 
-    m = Model(A,B,C,Σ,nn) # define model object
+    m = Model(A, B, C, Σ, nn) # define model object
     R, FlagConverged = Correlation(m.S)
     display(FlagConverged)
     display(R)
@@ -66,8 +65,7 @@ function old_keynesian()
         (3) iₜ = θ₁ xₜ + θ₂ πₜ + ϵ
 
         st.dev.(ϵ) = σ
-        2 states (x and π)
-    =#
+        2 states (x and π) =#
 
     neq = 3 # number of equations/variables
     nn = 2 # number of state variables
@@ -87,10 +85,10 @@ function old_keynesian()
     e = 1
 
     # define matrices
-    A = zeros(neq,neq)
-    B = zeros(neq,neq)
-    C = zeros(neq,nq)
-    Σ = zeros(nq,nq)
+    A = zeros(neq, neq)
+    B = zeros(neq, neq)
+    C = zeros(neq, nq)
+    Σ = zeros(nq, nq)
 
     # equation (1): xₜ = xₜ₋₁ - γ (iₜ - πₜ₋₁) 
     A[1,x] = 1
@@ -112,7 +110,7 @@ function old_keynesian()
     # covariance matrix
     Σ = [σ]
 
-    m = Model(A,B,C,Σ,nn) # define model object
+    m = Model(A, B, C, Σ, nn) # define model object
     R, FlagConverged = Correlation(m.S)
     display(FlagConverged)
     display(R)
@@ -137,8 +135,7 @@ function frictionless_mon_dominance()
         (4) iₜ = θ πₜ + vₜ
 
         st.dev(ϵ₁) = σ₁
-        st.dev(ϵ₂) = σ₂
-    =#
+        st.dev(ϵ₂) = σ₂ =#
 
     neq = 4 # number of equations/variables
     nn = 2 # number of state variables
@@ -153,14 +150,14 @@ function frictionless_mon_dominance()
     σ₂ = 0.02
 
     # define variable indices
-    v,r,pi,ir = 1:4
+    v, r, pi, ir = 1:4
     e1, e2 = 1:2
 
     # define matrices
-    A = zeros(neq,neq)
-    B = zeros(neq,neq)
-    C = zeros(neq,nq)
-    Σ = zeros(nq,nq)
+    A = zeros(neq, neq)
+    B = zeros(neq, neq)
+    C = zeros(neq, nq)
+    Σ = zeros(nq, nq)
 
     # equation (1): vₜ = ρ vₜ₋₁ + ϵ₁ₜ
     A[1,v] = 1
@@ -186,9 +183,9 @@ function frictionless_mon_dominance()
     Σ[e1,e1] = σ₁
     Σ[e2,e2] = σ₂
 
-    m = Model(A,B,C,Σ,nn) # define model
+    m = Model(A, B, C, Σ, nn) # define model
     V = VarDecomp(m.S, 500) # variance decomposition
-    display( pie(["Mon. Pol Shock", "Real Interest Shock"], V[pi,:], title="Variance Decomposition")  )
+    display(pie(["Mon. Pol Shock", "Real Interest Shock"], V[pi,:], title="Variance Decomposition"))
 
     Vars = 2:4 # display real interest, inflation and nominal rate
     Labels = ["Real Interest", "Inflation", "Nominal Interest"]
@@ -213,8 +210,7 @@ function three_eq_nk()
         (3) iₜ = θ₁ xₜ + θ₂ πₜ + ϵ
 
         st.dev.(ϵ) = σ
-        No states
-    =#
+        No states =#
 
     neq = 3 # number of equations/variables
     nn = 0 # number of state variables
@@ -234,10 +230,10 @@ function three_eq_nk()
     e = 1
 
     # define matrices
-    A = zeros(neq,neq)
-    B = zeros(neq,neq)
-    C = zeros(neq,nq)
-    Σ = zeros(nq,nq)
+    A = zeros(neq, neq)
+    B = zeros(neq, neq)
+    C = zeros(neq, nq)
+    Σ = zeros(nq, nq)
 
     # equation (1): xₜ = Eₜxₜ₊₁ - γ (iₜ - Eₜπₜ₊₁) 
     A[1,x] = -1
@@ -259,7 +255,7 @@ function three_eq_nk()
     # covariance matrix
     Σ = [σ]
 
-    m = Model(A,B,C,Σ,nn) # define model object
+    m = Model(A, B, C, Σ, nn) # define model object
 
     # plot options
     T = 12 # periods in the irf
@@ -272,3 +268,77 @@ function three_eq_nk()
     nothing
 end
 three_eq_nk()
+
+function fiscal_dom_nk()
+
+    #=  NK MODEL + FISCAL DOMINANCE
+        (1) xₜ = Eₜxₜ₊₁ - γ (iₜ - Eₜπₜ₊₁) 
+        (2) πₜ = β Eₜπₜ₊₁ + κ xₜ
+        (3) iₜ = ρ iₜ₋₁ + ϵₜ
+        (4) β vₜ = vₜ₋₁ + iₜ₋₁ - πₜ
+
+        st.dev.(ϵ) = σ
+        No states =#
+
+    neq = 4 # number of equations/variables
+    nn = 2 # number of state variables
+    nm = 2 # number of non-state variables
+    nq = 1 # number of exogenous variables
+
+    # parameters
+    γ = 1.0
+    β = 0.98
+    κ = 0.5
+    ρ = 0.99
+    σ = 1.0
+
+    # define variable indices
+    ir, v, x, pi = 1:4
+    e = 1
+
+    # define matrices
+    A = zeros(neq, neq)
+    B = zeros(neq, neq)
+    C = zeros(neq, nq)
+    Σ = zeros(nq, nq)
+
+    # equation (1): xₜ = Eₜxₜ₊₁ - γ (iₜ - Eₜπₜ₊₁) 
+    A[1,x] = -1
+    A[1,pi] = -γ
+    B[1,x] = -1
+    A[1,ir] = γ
+
+    # equation (2): πₜ = β Eₜπₜ₊₁ + κ xₜ
+    A[2,pi] = -β
+    B[2,x] = κ
+    B[2,pi] = -1
+
+    # equation (3): iₜ = ρ iₜ₋₁ + ϵ
+    A[3,ir] = 1
+    B[3,ir] = ρ
+    C[3,e] = 1
+
+    # equation (4): β vₜ = vₜ₋₁ + iₜ₋₁ - πₜ
+    A[4,v] = β
+    B[4,v] = 1
+    B[4,ir] = 1
+    B[4,pi] = -1
+
+    # covariance matrix
+    Σ = [σ]
+
+    m = Model(A, B, C, Σ, nn) # define model object
+
+    # plot options
+    T = 12 # periods in the irf
+    Labels = ["Interest Rate", "Public Debt", "Output Gap", "Inflation"]
+
+    display(m.S.P)
+
+    # response to surplus shock
+    Fig = IRF(m.S, 1, T=T, Labels=Labels)
+    plot!(Fig, title="Monetary policy shock")
+    display(Fig)
+    nothing
+end
+fiscal_dom_nk()
