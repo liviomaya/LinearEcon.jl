@@ -1,3 +1,4 @@
+using Parameters, LinearAlgebra, Plots, LinearEcon
 
 function price_stock()
 
@@ -342,3 +343,140 @@ function fiscal_dom_nk()
     nothing
 end
 fiscal_dom_nk()
+
+function open_econ()
+
+    #=  SIMPLIFIED OPEN ECONOMY MODEL
+        (1) πₜ = πHₜ + (λ/(1-λ)) qₜ
+        (2) isₜ = ϕ bFₜ + uₜ
+        (3) qₜ = Eₜqₜ₊₁ + isₜ + Eₜπₜ₊₁
+        (4) nxₜ = λ (qₜ - cₜ)
+        (5) β bFₜ = bFₜ₋₁ - nxₜ + Γ (isₜ + Δeₜ - πHₜ)
+        (6) Δeₜ = Δqₜ + πₜ
+        (7) cₜ = ρ1 cₜ₋₁ + ϵ1ₜ
+        (8) πHₜ = ρ2 πHₜ₋₁ + ϵ2ₜ 
+        (9) uₜ = ρ₃ uₜ₋₁ + ϵ3ₜ
+        (10) qlₜ = qₜ =#
+
+    neq = 10 # number of equations/variables
+    nn = 5 # number of state variables
+    nm = neq - nn # number of non-state variables
+    nq = 3 # number of exogenous variables
+    
+    # parameters
+    λ = 0.20
+    ϕ = 0.03
+    β = 0.98
+    Γ = 1.0
+    ρ1 = 0.9
+    ρ2 = 0.9
+    ρ3 = 0.0
+    
+    # define variable indices
+    bF, c, πH, u, ql = 1:nn
+    πi, q, nx, Δe, is = nn + 1:neq
+    e1, e2, e3 = 1:nq
+    
+    if true
+        # define matrices
+        A = zeros(neq, neq)
+        B = zeros(neq, neq)
+        C = zeros(neq, nq)
+        Σ = zeros(nq, nq)
+        
+        # equation (1): πₜ = πHₜ + (λ/(1-λ)) Δqₜ
+        i = 1
+        B[i,πi] = -1
+        A[i,πH] = -1
+        B[i,q] = λ / (1 - λ) 
+        B[i,ql] = -λ / (1 - λ) 
+        
+        # equation (2): isₜ = ϕ bFₜ + uₜ
+        i += 1
+        B[i,is] = -1
+        A[i,bF] = -ϕ
+        A[i,u] = -1
+        
+        # equation (3): qₜ = Eₜqₜ₊₁ + isₜ + Eₜπₜ₊₁
+        i += 1
+        B[i,q] = -1
+        A[i,q] = -1
+        B[i,is] = 1
+        A[i,πi] = -1
+
+        # equation (4): nxₜ = λ (qₜ - cₜ)
+        i += 1
+        B[i,nx] = -1
+        B[i,q] = λ
+        A[i,c] = λ
+
+        # equation (5): β bFₜ = bFₜ₋₁ - nxₜ + Γ (isₜ + Δeₜ - πHₜ)
+        i += 1
+        A[i,bF] = β
+        B[i,bF] = 1
+        B[i,nx] = -1
+        B[i,is] = Γ
+        B[i,Δe] = Γ
+        A[i,πH] = Γ
+
+        # equation (6):  Δeₜ = Δqₜ + πₜ = qₜ - qlₜ₋₁ + πₜ
+        i += 1
+        B[i,Δe] = -1
+        B[i,q] = 1
+        B[i,ql] = -1
+        B[i,πi] = 1
+
+        # equation (7):  cₜ = ρ1 cₜ₋₁ + ϵ1ₜ
+        i += 1
+        A[i,c] = 1
+        B[i,c] = ρ1
+        C[i,e1] = 1
+        # B[i,is] = -0.3
+
+        # equation (8): πHₜ = ρ2 πHₜ₋₁ + ϵ2ₜ 
+        i += 1
+        A[i,πH] = 1
+        B[i,πH] = ρ2
+        C[i,e2] = 1
+
+        # equation (9): uₜ = ρ₃ uₜ₋₁ + ϵ3ₜ
+        i += 1
+        A[i,u] = 1
+        B[i,u] = ρ3
+        C[i,e3] = 1
+        
+        # equation (10): qlₜ = qₜ
+        i += 1
+        A[i,ql] = 1
+        B[i,q] = 1
+
+        # covariance matrix
+        Σ = Float64.(collect(I(nq)))
+    end
+    
+    m = Model(A, B, C, Σ, nn) # define model object
+    
+    # plot options
+    T = 12 # periods in the irf
+    Vars = [c, nx, bF, Δe]
+    Labels = ["c", "nx", "bF,", "Δe"]
+    
+    # display(m.flag_complex)
+    # display(m.S.P)
+    
+    # response to shocks
+    for e in 1:nq
+        Fig = IRF(m.S, e, T=T, Vars=Vars, Labels=Labels)
+        plot!(Fig, title="Response to shock $e")
+        display(Fig)
+    end
+
+    Vars = [bF, is, Δe, nx]
+    Labels = ["bF", "is,", "Δe", "nx"]
+    # Fig = IRF(m.S, e3, T=T, Vars=Vars, Labels=Labels)
+    # plot!(Fig, title="Response to shock $e3")
+    # display(Fig)
+
+    nothing
+end
+open_econ()
