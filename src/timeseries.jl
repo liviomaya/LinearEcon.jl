@@ -1,10 +1,10 @@
 
 """
-    M = MovingAverage(S, T)
+    M = moving_average(S, T)
 
 Compute the moving average representation of VAR model `xₜ = P xₜ₋₁ + Q ϵₜ` stored in `S`, going `T` periods back. The MA representation is `xₜ = ∑ᵢ₌₀ Cᵢ ϵₜ₋ᵢ` with `Cᵢ = Pⁱ Q`. Output `M[:,:,i]` stores `Cᵢ₋₁`.
 """
-function MovingAverage(S::VARModel, T)
+function moving_average(S::VARModel, T)
     MA = zeros(S.n, S.q, T)
     for t in 1:T
         MA[:, :, t] = (S.P^(t - 1)) * S.Q
@@ -13,13 +13,13 @@ function MovingAverage(S::VARModel, T)
 end
 
 """
-    V = VarDecomp(S, T)
+    V = var_decomp(S, T)
 
 Compute the variance decomposition of `T` period ahead forecast errors for VAR model `S`. Output `V[i,j]` stores `i`-th variable variance due to shock `j`.
 """
-    function VarDecomp(S::VARModel, T)
+    function var_decomp(S::VARModel, T)
     @assert isdiag(S.Σ)
-    MA = MovingAverage(S, T)
+    MA = moving_average(S, T)
     V = zeros(S.n, S.q)
     for j in 1:S.q
         Ij = zeros(S.q, S.q)
@@ -30,10 +30,8 @@ Compute the variance decomposition of `T` period ahead forecast errors for VAR m
 end
 
 
-function PathPlotGenerator(X, Labels)
+function path_plot_template(X, label)
     T = size(X, 1)
-
-    label = isnothing(Labels) ? :none : permutedims(Labels)
 
     Fig = plot(xlim=(1, Inf), gridalpha=0.05, tickfontsize=12)
 
@@ -45,57 +43,57 @@ function PathPlotGenerator(X, Labels)
 end
 
 """
-    Fig = IRF(S, e)
-    Fig = IRF(S, e; T, Vars, Labels)
+    Fig = irf(S, e)
+    Fig = irf(S, e; T, Vars, label)
 
 Returns a pre-formatted figure `Fig` with the impulse response function (the MA presentation) of VAR model `S` to the shock indexed by `e`.
 
 # Keyword Arguments
 `T`: number of periods. Default = 25
 
-`Vars`: array with indices of variables to be displayed. Default = All variables
+`id`: array with indices of variables to be displayed. Default = All variables
 
-`Labels`: one-dimensional string array with labels. Default = `nothing`
+`label`: figure labels. Default = :none
 """
-    function IRF(S::VARModel, e::Int64; T=25, Vars=1:S.n, Labels=nothing)
-    MA = MovingAverage(S, T)
-X = MA[Vars,e,:]'
-    Fig = PathPlotGenerator(X, Labels)
+    function irf(S::VARModel, e::Int64; T=25, id=1:S.n, label=:none)
+    MA = moving_average(S, T)
+    X = MA[id,e,:]'
+    Fig = path_plot_template(X, label)
     return Fig
 end
 
 
 """
-    Fig = Simulation(S)
-    Fig = Simulation(S; T, Vars, Labels, X0)
+    Fig = simulate(S)
+    Fig = simulate(S; T, id, label, X0)
 
 Returns a pre-formatted figure `Fig` with a simulated path of the VAR model `S`.
 
 # Keyword Arguments
 `T`: number of periods. Default = 25
 
-`Vars`: array with indices of variables to be displayed. Default = All variables
+`id`: array with indices of variables to be displayed. Default = All variables
 
-`Labels`: one-dimensional string array with labels. Default = `nothing`
+`label`: figure labels. Default = `nothing`
 
 `X0`: initial state of the system. Default = vector of zeros
 """
-function Simulation(S::VARModel; T=25, Vars=1:S.n, Labels=nothing, X0=zeros(S.n))
+function simulate(S::VARModel; T=25, id=1:S.n, label=nothing, X0=zeros(S.n))
     X = zeros(S.n, T)
     ShockDist = MvNormal(zeros(S.q), S.Σ)
     for t in 1:T
-    State = (t == 1) ? X0 : X[:,t - 1]
+        State = (t == 1) ? X0 : X[:,t - 1]
         X[:,t] = S.P * State + S.Q * rand(ShockDist)
-end
-    Y = X[Vars, :]'
-    Fig = PathPlotGenerator(Y, Labels)
+    end
+    Y = X[id, :]'
+    Fig = path_plot_template(Y, label)
     return Fig
 end
 
 
 """
-    V, FlagConverged = Covariance(S)
-    V, FlagConverged = Covariance(S; IterMax, Tol)
+    V, FlagConverged = cov(S)
+    V, FlagConverged = cov(S; IterMax, Tol)
 
 Compute the covariance matrix `V` of the VAR model `S`. Boolean `FlagConverged` indicates if convergence of Lyapunov operator was achieved.
 
@@ -104,10 +102,10 @@ Compute the covariance matrix `V` of the VAR model `S`. Boolean `FlagConverged` 
 
 `Tol`: tolerated approximation error. Default = 1e-8.
 """
-function Covariance(S::VARModel; IterMax=10000, Tol=1e-8)
+    function cov(S::VARModel; IterMax=10000, Tol=1e-8)
     damp = 1.0
     FlagConverged = false
-    V = zeros(S.n, S.n)
+        V = zeros(S.n, S.n)
     for i in 1:IterMax
         TV = S.P * V * S.P' + S.Q * S.Σ * S.Q'
         Dist = maximum(abs.(TV .- V))
@@ -121,29 +119,29 @@ function Covariance(S::VARModel; IterMax=10000, Tol=1e-8)
 end
 
 """
-    R, FlagConverged = Correlation(S)
-    R, FlagConverged = Correlation(S; IterMax, Tol)
+    R, FlagConverged = corr(S)
+    R, FlagConverged = corr(S; IterMax, Tol)
 
-Compute the Correlation matrix `R` of the VAR model `S`. Boolean `FlagConverged` indicates if convergence of Lyapunov operator was achieved.
+Compute the correlation matrix `R` of the VAR model `S`. Boolean `FlagConverged` indicates if convergence of Lyapunov operator was achieved.
 
 # Keyword Arguments
 `IterMax`: maximum number of iterations. Default = 10000.
 
 `Tol`: tolerated approximation error. Default = 1e-8.
 """
-function Correlation(S::VARModel; IterMax=10000, Tol=1e-8)
-    V, FlagConverged = Covariance(S, IterMax=IterMax, Tol=Tol)
+function corr(S::VARModel; IterMax=10000, Tol=1e-8)
+    V, FlagConverged = cov(S, IterMax=IterMax, Tol=Tol)
     SD = sqrt.(diag(V))
     SDM = diagm(0 => SD)
     iSDM = inv(SDM)
     iSDM[SDM .== 0] .= 0.0 # set correlation = 0 to constant variables
-    R = iSDM * V * iSDM
-    return R, FlagConverged
+R = iSDM * V * iSDM
+return R, FlagConverged
 end
 
 
 """
-    M, R = CholDecomp(S::VarModel)
+    M, R = cholesky(S::VarModel)
 
 Orthogonalize innovations of system `S` and return new VAR model `M`. Each column of array `R` contains the linear combination of the original system's IRFs that lead to system `M` IRFs. 
 
@@ -151,7 +149,7 @@ Orthogonalize innovations of system `S` and return new VAR model `M`. Each colum
 
 `M` model: xₜ = P xₜ₋₁ + Q*R ηₜ     cov(η) = I
 """
-function CholDecomp(S::VARModel)
+function cholesky(S::VARModel)
     # ηₜ = R⁻¹ ϵₜ       cov(η) = I
     G = Matrix(cholesky(S.Σ).L) # Σ = G G'
     # I = cov(η) = R⁻¹ Σ R⁻¹' = R⁻¹ G G' R⁻¹' => R = G

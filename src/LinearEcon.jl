@@ -1,6 +1,6 @@
 module LinearEcon
 
-export Model, VARModel, MovingAverage, VarDecomp, IRF, Simulation, Covariance, Correlation, CholDecomp
+export Model, VARModel, moving_average, var_decomp, irf, simulate, cov, corr, cholesky
 
 using LinearAlgebra
 using Distributions
