@@ -92,51 +92,31 @@ end
 
 
 """
-    V, FlagConverged = cov(S)
-    V, FlagConverged = cov(S; IterMax, Tol)
+    V = cov(S)
 
-Compute the covariance matrix `V` of the VAR model `S`. Boolean `FlagConverged` indicates if convergence of Lyapunov operator was achieved.
-
-# Keyword Arguments
-`IterMax`: maximum number of iterations. Default = 10000.
-
-`Tol`: tolerated approximation error. Default = 1e-8.
+Compute the covariance matrix `V` of the VAR model `S`. 
 """
-    function cov(S::VARModel; IterMax=10000, Tol=1e-8)
-    damp = 1.0
-    FlagConverged = false
-        V = zeros(S.n, S.n)
-    for i in 1:IterMax
-        TV = S.P * V * S.P' + S.Q * S.Σ * S.Q'
-        Dist = maximum(abs.(TV .- V))
-        FlagConverged = (Dist < Tol)
-        FlagConverged && break
-        V = damp * TV + (1 - damp) * V
-    end
+function cov(S::VARModel)
+    vec_cov = (I((S.n)^2) .- kron(S.P, S.P)) \  (S.Q * S.Σ * S.Q')[:]
+    V = reshape(vec_cov, S.n, S.n)
     V = round.(V, digits=10)
     V = (V .+ V') / 2
-    return V, FlagConverged
+    return V
 end
 
 """
-    R, FlagConverged = corr(S)
-    R, FlagConverged = corr(S; IterMax, Tol)
+    R = corr(S)
 
-Compute the correlation matrix `R` of the VAR model `S`. Boolean `FlagConverged` indicates if convergence of Lyapunov operator was achieved.
-
-# Keyword Arguments
-`IterMax`: maximum number of iterations. Default = 10000.
-
-`Tol`: tolerated approximation error. Default = 1e-8.
+Compute the correlation matrix `R` of the VAR model `S`. 
 """
-function corr(S::VARModel; IterMax=10000, Tol=1e-8)
-    V, FlagConverged = cov(S, IterMax=IterMax, Tol=Tol)
+function corr(S::VARModel)
+    V = cov(S)
     SD = sqrt.(diag(V))
     SDM = diagm(0 => SD)
     iSDM = inv(SDM)
     iSDM[SDM .== 0] .= 0.0 # set correlation = 0 to constant variables
-R = iSDM * V * iSDM
-return R, FlagConverged
+    R = iSDM * V * iSDM
+    return R
 end
 
 
