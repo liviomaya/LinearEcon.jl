@@ -1,3 +1,4 @@
+using Plots:display
 using Parameters, LinearAlgebra, Plots, LinearEcon
 
 function price_stock()
@@ -274,72 +275,106 @@ function fiscal_dom_nk()
 
     #=  NK MODEL + FISCAL DOMINANCE
         (1) xₜ = Eₜxₜ₊₁ - γ (iₜ - Eₜπₜ₊₁) 
-        (2) πₜ = β Eₜπₜ₊₁ + κ xₜ
-        (3) iₜ = ρ iₜ₋₁ + ϵₜ
-        (4) β vₜ = vₜ₋₁ + iₜ₋₁ - πₜ
+        (2) πₜ = β Eₜπₜ₊₁ + κ xₜ + e1ₜ
+        (3) iₜ = ϕ πₜ + ρ iₜ₋₁ + e2ₜ
+        (4) β vₜ = vₜ₋₁ + rₜ - πₜ
+        (5) rₜ = ωβqₜ - qₜ₋₁
+        (6) qₜ = -iₜ + ωβ Eₜqₜ₊₁
+        (7) qlₜ = qₜ
 
-        st.dev.(ϵ) = σ
+        st.dev(e1) = 1
+        st.dev(e2) = σ
         No states =#
 
-    neq = 4 # number of equations/variables
-    nn = 2 # number of state variables
-    nm = 2 # number of non-state variables
-    nq = 1 # number of exogenous variables
+    neq = 7 # number of equations/variables
+    nn = 3 # number of state variables
+    nq = 2 # number of exogenous variables
 
     # parameters
     γ = 1.0
     β = 0.98
     κ = 0.5
-    ρ = 0.99
+    ρ = 0.0
+    ω = 0.7
+    ϕ = 0.4
     σ = 1.0
 
     # define variable indices
-    ir, v, x, pi = 1:4
-    e = 1
+    ir, v, ql = 1:nn
+    x, πi, r, q = nn + 1:neq
+    e1, e2 = 1:nq
 
-    # define matrices
-    A = zeros(neq, neq)
-    B = zeros(neq, neq)
-    C = zeros(neq, nq)
-    Σ = zeros(nq, nq)
+    if true
+        # define matrices
+        A = zeros(neq, neq)
+        B = zeros(neq, neq)
+        C = zeros(neq, nq)
+        Σ = zeros(nq, nq)
 
-    # equation (1): xₜ = Eₜxₜ₊₁ - γ (iₜ - Eₜπₜ₊₁) 
-    A[1,x] = -1
-    A[1,pi] = -γ
-    B[1,x] = -1
-    A[1,ir] = γ
+        # equation (1): xₜ = Eₜxₜ₊₁ - γ (iₜ - Eₜπₜ₊₁) 
+        i = 1
+        A[i,x] = -1
+        B[i,x] = -1
+        A[i,ir] = γ
+        A[i,πi] = -γ
 
-    # equation (2): πₜ = β Eₜπₜ₊₁ + κ xₜ
-    A[2,pi] = -β
-    B[2,x] = κ
-    B[2,pi] = -1
+        # equation (2): πₜ = β Eₜπₜ₊₁ + κ xₜ + e1ₜ
+        i += 1
+        B[i,πi] = -1
+        A[i,πi] = -β
+        B[i,x] = κ
+        C[i,e1] = 1
 
-    # equation (3): iₜ = ρ iₜ₋₁ + ϵ
-    A[3,ir] = 1
-    B[3,ir] = ρ
-    C[3,e] = 1
+        # equation (3): iₜ = ϕ πₜ + ρ iₜ₋₁ + e2ₜ
+        i += 1
+        A[i,ir] = 1
+        B[i,πi] = ϕ
+        B[i,ir] = ρ
+        C[i,e2] = 1
 
-    # equation (4): β vₜ = vₜ₋₁ + iₜ₋₁ - πₜ
-    A[4,v] = β
-    B[4,v] = 1
-    B[4,ir] = 1
-    B[4,pi] = -1
+        # equation (4): β vₜ = vₜ₋₁ + rₜ - πₜ
+        i += 1
+        A[i,v] = β
+        B[i,v] = 1
+        B[i,r] = 1
+        B[i,πi] = -1
 
-    # covariance matrix
-    Σ = [σ]
+        # (5) rₜ = ωβqₜ - qₜ₋₁
+        i += 1
+        B[i,r] = -1
+        B[i,q] = ω * β
+        B[i,ql] = -1
 
-    m = Model(A, B, C, Σ, nn) # define model object
+        # (6) qₜ = -iₜ + ωβ Eₜqₜ₊₁
+        i += 1
+        B[i,q] = -1
+        A[i,ir] = 1
+        A[i,q] = -ω * β
+
+        # (7) qlₜ = qₜ
+        i += 1
+        A[i,ql] = 1
+        B[i,q] = 1
+
+        # covariance matrix
+        Σ = [1 0; 0 σ]
+
+        m = Model(A, B, C, Σ, nn) # define model object
+    end
 
     # plot options
     T = 12 # periods in the irf
-    Labels = ["Interest Rate", "Public Debt", "Output Gap", "Inflation"]
-
-    display(m.S.P)
+    Labels = ["Interest Rate", "Public Debt", "Debt Return", "Inflation"]
+    Vars = [ir, v, r, πi]
 
     # response to surplus shock
-    Fig = IRF(m.S, 1, T=T, Labels=Labels)
-    plot!(Fig, title="Monetary policy shock")
+    Fig = IRF(m.S, e1, T=T, Labels=Labels, Vars=Vars)
+    plot!(Fig, title="Monetary policy shock", ylim=(-0.75, 0.75))
     display(Fig)
+
+    V = Covariance(m.S)[1]
+    100 * V[πi, πi] |> display
+
     nothing
 end
 fiscal_dom_nk()
