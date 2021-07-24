@@ -20,7 +20,7 @@ convert_to_real(x) = convert_to_real(x, true)[1]
 
 
 function empty_solution()
-    S = EmptyVARModel()
+    S = empty_VARModel()
     flag_rank = false
     flag_complex = false
     return S, flag_rank, flag_complex
