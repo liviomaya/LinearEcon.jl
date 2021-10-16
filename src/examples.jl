@@ -43,16 +43,16 @@ function price_stock()
     Σ = [σ]
 
     m = Model(A, B, C, Σ, nn) # define model object
-    R, FlagConverged = Correlation(m.S)
+    R, FlagConverged = corr(m.S)
     display(FlagConverged)
     display(R)
 
     # plot options
     T = 12 # periods in the irf
-    Labels = ["Dividend", "Stock Price"]
+    Labels = ["Dividend" "Stock Price"]
 
     # response to surplus shock
-    Fig = IRF(m.S, 1, T=T, Labels=Labels)
+    Fig = irf(m.S, 1, T=T, label=Labels)
     plot!(Fig, title="Dividend Shock")
     display(Fig)
     nothing
@@ -113,16 +113,16 @@ function old_keynesian()
     Σ = [σ]
 
     m = Model(A, B, C, Σ, nn) # define model object
-    R, FlagConverged = Correlation(m.S)
+    R, FlagConverged = corr(m.S)
     display(FlagConverged)
     display(R)
 
     # plot options
     T = 12 # periods in the irf
-    Labels = ["Output Gap", "Inflation", "Interest Rate"]
+    Labels = ["Output Gap", "Inflation", "Interest Rate"] |> permutedims
 
     # response to surplus shock
-    Fig = IRF(m.S, 1, T=T, Labels=Labels)
+    Fig = irf(m.S, 1, T=T, label=Labels)
     plot!(Fig, title="Monetary Policy Shock")
     display(Fig)
     nothing
@@ -186,17 +186,17 @@ function frictionless_mon_dominance()
     Σ[e2,e2] = σ₂
 
     m = Model(A, B, C, Σ, nn) # define model
-    V = VarDecomp(m.S, 500) # variance decomposition
+    V = var_decomp(m.S, 500) # variance decomposition
     display(pie(["Mon. Pol Shock", "Real Interest Shock"], V[pi,:], title="Variance Decomposition"))
 
     Vars = 2:4 # display real interest, inflation and nominal rate
-    Labels = ["Real Interest", "Inflation", "Nominal Interest"]
+    Labels = ["Real Interest", "Inflation", "Nominal Interest"] |> permutedims
 
-    Fig = IRF(m.S, 2, Vars=Vars, Labels=Labels)
+    Fig = IRF(m.S, 2, id=Vars, label=Labels)
     plot!(Fig, title="Natural Rate Shock")
     display(Fig)
 
-    Fig = Simulation(m.S, Vars=Vars, Labels=Labels)
+    Fig = Simulation(m.S, id=Vars, label=Labels)
     plot!(Fig, title="Simulation")
     display(Fig)
     
@@ -261,10 +261,10 @@ function three_eq_nk()
 
     # plot options
     T = 12 # periods in the irf
-    Labels = ["Output Gap", "Inflation", "Interest Rate"]
+    Labels = ["Output Gap", "Inflation", "Interest Rate"] |> permutedims
 
     # response to surplus shock
-    Fig = IRF(m.S, 1, T=T, Labels=Labels)
+    Fig = irf(m.S, 1, T=T, label=Labels)
     plot!(Fig, title="Monetary policy shock")
     display(Fig)
     nothing
@@ -364,11 +364,11 @@ function fiscal_dom_nk()
 
     # plot options
     T = 12 # periods in the irf
-    Labels = ["Interest Rate", "Public Debt", "Debt Return", "Inflation"]
+    Labels = ["Interest Rate" "Public Debt" "Debt Return" "Inflation"]
     Vars = [ir, v, r, πi]
 
     # response to surplus shock
-    Fig = IRF(m.S, e1, T=T, Labels=Labels, Vars=Vars)
+    Fig = irf(m.S, e1, T=T, label=Labels, id=Vars)
     plot!(Fig, title="Monetary policy shock", ylim=(-0.75, 0.75))
     display(Fig)
 
@@ -494,21 +494,21 @@ function open_econ()
     # plot options
     T = 12 # periods in the irf
     Vars = [c, nx, bF, Δe]
-    Labels = ["c", "nx", "bF,", "Δe"]
+    Labels = ["c", "nx", "bF,", "Δe"] |> permutedims
     
     # display(m.flag_complex)
     # display(m.S.P)
     
     # response to shocks
     for e in 1:nq
-        Fig = IRF(m.S, e, T=T, Vars=Vars, Labels=Labels)
+        Fig = irf(m.S, e, T=T, id=Vars, label=Labels)
         plot!(Fig, title="Response to shock $e")
         display(Fig)
     end
 
-    Vars = [bF, is, Δe, nx]
+    id = [bF, is, Δe, nx]
     Labels = ["bF", "is,", "Δe", "nx"]
-    # Fig = IRF(m.S, e3, T=T, Vars=Vars, Labels=Labels)
+    # Fig = IRF(m.S, e3, T=T, id=Vars, label=Labels)
     # plot!(Fig, title="Response to shock $e3")
     # display(Fig)
 
