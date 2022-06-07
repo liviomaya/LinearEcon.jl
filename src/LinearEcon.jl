@@ -1,13 +1,9 @@
 module LinearEcon
 
-export Model, VARModel, moving_average, var_decomp, irf, simulate, cov, corr, cholesky
+export LREM, LREMSolution, solve
 
-using LinearAlgebra
-using Distributions
-using Plots
-gr()
-include("structures.jl")
-include("modelsolution.jl")
-include("timeseries.jl")
+include("f0_header.jl")
+include("f1_lrem.jl")
+include("f2_solution.jl")
 
-end 
+end
