@@ -2,12 +2,12 @@ function convert_to_matrix(x)
     if typeof(x) in (Int64, Float64)
         return reshape([Float64(x)], 1, 1)
     elseif typeof(x) in (Array{Int64,1}, Array{Float64,1})
-            n = length(x)
-            return reshape(Float64.(x), n, 1)
-        elseif typeof(x) in (Array{Int64,2}, Array{Float64,2})
-            return Float64.(x)
-        else
-            error("Type error.")
+        n = length(x)
+        return reshape(Float64.(x), n, 1)
+    elseif typeof(x) in (Array{Int64,2}, Array{Float64,2})
+        return Float64.(x)
+    else
+        error("Type error.")
     end
 end
 
@@ -27,9 +27,9 @@ function empty_solution()
 end
 
 function solve_model(A, B, C, Σ, n, m)
-        
+
     F = schur(B, A)
-        # λ = F.α ./ F.β eigenvalues
+    # λ = F.α ./ F.β eigenvalues
     Istable = abs.(F.α) .< abs.(F.β)
     n̄ = count(Istable)
     m̄ = count(.!Istable)
@@ -47,37 +47,37 @@ function solve_model(A, B, C, Σ, n, m)
         P = Z * inv(S) * T * inv(Z)
         Q = Z * inv(S) * Ct
     elseif nostate
-                M = -inv(T) * Ct
-                P = zeros(m, m)
-                Q = Z * M
-        else
-                Z11 = Z[1:n,1:n]
-                (det(Z11) == 0) && return empty_solution()
+        M = -inv(T) * Ct
+        P = zeros(m, m)
+        Q = Z * M
+    else
+        Z11 = Z[1:n, 1:n]
+        (det(Z11) == 0) && return empty_solution()
 
-                Z12 = Z[1:n,n + 1:end]
-                Z21 = Z[n + 1:end,1:n]
-                Z22 = Z[n + 1:end,n + 1:end]
-        
-                S11 = S[1:n,1:n]
-                S12 = S[1:n,n + 1:end]
-                S22 = S[n + 1:end,n + 1:end]
+        Z12 = Z[1:n, n+1:end]
+        Z21 = Z[n+1:end, 1:n]
+        Z22 = Z[n+1:end, n+1:end]
 
-                T11 = T[1:n,1:n]
-                T12 = T[1:n,n + 1:end]
-                T22 = T[n + 1:end,n + 1:end]
+        S11 = S[1:n, 1:n]
+        S12 = S[1:n, n+1:end]
+        S22 = S[n+1:end, n+1:end]
 
-                Ct1 = Ct[1:n,:]
-                Ct2 = Ct[n + 1:end,:]
+        T11 = T[1:n, 1:n]
+        T12 = T[1:n, n+1:end]
+        T22 = T[n+1:end, n+1:end]
 
-                M = -inv(T22) * Ct2
-                Py = Z21 * inv(Z11)
-                Qy = (Z22 - Z21 * inv(Z11) * Z12) * M
+        Ct1 = Ct[1:n, :]
+        Ct2 = Ct[n+1:end, :]
 
-                Px = Z11 * inv(S11) * T11 * inv(Z11)
-                Qx = Z11 * inv(S11) * ((T12 - T11 * inv(Z11) * Z12) * M + Ct1)
+        M = -inv(T22) * Ct2
+        Py = Z21 * inv(Z11)
+        Qy = (Z22 - Z21 * inv(Z11) * Z12) * M
 
-                P = [Px zeros(n, m); Py zeros(m, m)]
-                Q = [Qx; Qy]
+        Px = Z11 * inv(S11) * T11 * inv(Z11)
+        Qx = Z11 * inv(S11) * ((T12 - T11 * inv(Z11) * Z12) * M + Ct1)
+
+        P = [Px zeros(n, m); Py zeros(m, m)]
+        Q = [Qx; Qy]
     end
 
     flag_rank = true
